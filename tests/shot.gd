@@ -9,12 +9,15 @@ const SHOTS := [
 	[2, "l2_approach", Vector3(8.75, 0.1, 40.0), 0.0],
 	[2, "l2_detour", Vector3(62.0, 0.1, -20.0), 0.0],
 	[3, "l3_stopbox", Vector3(9.9, 0.1, 28.0), 0.0],
-	[3, "l3_waitbox", Vector3(12.5, 0.1, -5.3), PI / 2.0],
+	[3, "l3_waitbox", Vector3(12.8, 0.1, -5.4), PI / 2.0],
 	[4, "l4_start", null, 0.0],
-	[4, "l4_waitbox", Vector3(-9.5, 0.1, -5.3), -PI / 2.0],
-	[5, "l5_bridge", Vector3(8.3, 0.1, -60.0), 0.0],
+	[4, "l4_waitbox", Vector3(-9.3, 0.1, -5.4), -PI / 2.0],
+	[5, "l5_entry", Vector3(5.25, 0.1, 22.0), 0.0],
+	[5, "l5_bridge", Vector3(8.3, 0.1, -40.0), 0.0],
 	[6, "l6_ramp", Vector3(5.25, 0.1, -20.0), 0.0],
 	[6, "l6_truck", Vector3(8.3, 0.1, -230.0), 0.0],
+	[6, "l6_ticket", Vector3(5.25, 0.1, -20.0), 0.0, "highway_scooter"],
+	[3, "l3_ticket", Vector3(9.9, 0.1, 30.0), 0.0, "two_stage_left"],
 ]
 
 
@@ -34,6 +37,12 @@ func _ready() -> void:
 			level.scooter.global_transform = Transform3D(Basis(Vector3.UP, s[3]), s[2])
 			level.camera.global_position = level.camera._desired_position()
 		level.scooter.frozen = true  # hold still for the picture
+		if s.size() > 4:
+			# Show the real ticket for this law as the level would (caption/contrast from its zone).
+			for z in level.find_children("*", "ViolationZone", true, false):
+				if z.law_id == s[4]:
+					level._on_violated(z.law_id, z.contrast_id, z.caption, true)
+					break
 		if s[0] == 6 and s[1] == "l6_truck":
 			level.truck.global_position = Vector3(3.8, 0, -265.0)
 			level.truck.rotation.y = 0.0

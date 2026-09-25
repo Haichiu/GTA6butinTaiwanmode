@@ -37,7 +37,7 @@ func build() -> void:
 	lines_ns([-10.2, -7.0, -3.5, 0.0, 3.5, 7.0, 10.2],
 		["edge", "dash", "dash", "yellow2", "solid", "solid", "edge"], 40.0, STOP)
 	K.line(self, Vector2(0.2, STOP), Vector2(HALF, STOP), K.WHITE, 0.4)
-	K.zebra(self, Vector2(-HALF, A_HALF + 0.5), Vector2(HALF, A_HALF + 3.5), "x")
+	crosswalk(Vector2(-HALF, A_HALF + 0.5), Vector2(HALF, A_HALF + 3.5), "x")
 	for lane_x in [1.75, 5.25]:
 		K.ground_text(self, "禁\n行\n機\n車", Vector2(lane_x, 60.0), K.YELLOW)
 	K.ground_text(self, "左\n轉", Vector2(1.75, 25.0), K.WHITE, 0.0, 0.009)
@@ -75,8 +75,8 @@ func _add_rules() -> void:
 	var fwd := Vector3.FORWARD
 	ViolationZone.make(self, Vector2(0.3, STOP), Vector2(6.8, 80.0), "lane_ban", "turn_lane_straight",
 		"直行車道禁行機車；可是機車道到了路口只能右轉。", fwd)
-	ViolationZone.make(self, Vector2(0.3, -A_HALF + 0.5), Vector2(HALF, -2.0), "turn_lane_straight", "lane_ban",
-		"右轉專用道不能直走，直行車道又禁行機車：這個路口，機車就是不能直走。", fwd)
+	ViolationZone.make(self, Vector2(0.3, -A_HALF + 0.5), Vector2(HALF, -2.0), "turn_lane_straight", "lane_ban,turn_no_yield",
+		"這個路口機車怎麼直走都違規。轉彎不讓直行車、把直行機車撞倒的汽車，罰 900。", fwd)
 	ViolationZone.make(self, Vector2(0.3, -200.0), Vector2(6.8, -A_HALF - 0.5), "lane_ban", "sidewalk", "", fwd)
 	# Wrong-way: arterial southbound half, and the "other side" of A, B and C.
 	ViolationZone.make(self, Vector2(-HALF, -200.0), Vector2(-0.3, 80.0), "wrong_way")

@@ -11,6 +11,8 @@ var loop := false
 ## Start moving only once the scooter is within this distance (0 = start immediately).
 var trigger_distance := 0.0
 var target: Node3D
+## While true the vehicle waits in place (e.g. at a red light); the level releases it.
+var hold := false
 
 var _index := 1
 var _active := false
@@ -62,7 +64,7 @@ static func make_custom(parent: Node3D, visual: Node3D, bounds: AABB, points: Ar
 
 
 func _physics_process(delta: float) -> void:
-	if _done or waypoints.size() < 2:
+	if _done or hold or waypoints.size() < 2:
 		return
 	if not _active:
 		_active = trigger_distance <= 0.0 or (target != null and target.global_position.distance_to(global_position) < trigger_distance)

@@ -39,8 +39,8 @@ func build() -> void:
 		model(CARS + p[0] + ".glb", Vector3(9.5, 0, p[1]), PI, p[2], true)
 	sign_board("便當", Vector3(HALF + 1.5, 0, -300.0), -PI / 2.0, Color(0.8, 0.25, 0.15), 2.5)
 
-	ViolationZone.make(self, Vector2(0.3, Z_END), Vector2(6.8, Z_START), "lane_ban", "sidewalk",
-		"騎在空無一車的內側車道，跟騎上人行道嚇行人，罰一樣多。", Vector3.FORWARD)
+	ViolationZone.make(self, Vector2(0.3, Z_END), Vector2(6.8, Z_START), "lane_ban", "ped_red,sidewalk",
+		"在一條空無一車的車道上騎車 600，比行人闖紅燈（500）還貴。", Vector3.FORWARD)
 	ViolationZone.make(self, Vector2(-HALF, Z_END), Vector2(-0.3, Z_START), "wrong_way")
 	ViolationZone.make(self, Vector2(HALF + CURB, Z_END), Vector2(HALF + WALK, Z_START), "sidewalk", "lane_ban",
 		"騎上人行道閃違停，跟騎進空的內側車道，罰一樣多。")

@@ -5,7 +5,7 @@ extends LevelBase
 
 const HALF := 7.0  # 2 lanes each way below the bridge
 const BRIDGE_START := -30.0
-const BRIDGE_END := -230.0
+const BRIDGE_END := -190.0
 const STRIP_MIN := 7.3  # scooter strip on the bridge: x in [STRIP_MIN, STRIP_MAX]
 const STRIP_MAX := 9.3
 const WATER := Color(0.1, 0.24, 0.36)
@@ -39,7 +39,7 @@ func build() -> void:
 	while z > BRIDGE_END:
 		K.box(self, Vector3(0.3, 0.03, 0.8), Vector3(7.1, 0.05, z), Color(0.1, 0.1, 0.1))
 		z -= 2.0
-	for zz in [-60.0, -130.0, -200.0]:
+	for zz in [-60.0, -120.0, -175.0]:
 		for lane_x in [1.75, 5.25]:
 			K.ground_text(self, "禁\n行\n機\n車", Vector2(lane_x, zz), K.YELLOW)
 		K.ground_text(self, "機\n車", Vector2(8.3, zz + 20.0), K.WHITE, 0.0, 0.006)
@@ -47,35 +47,44 @@ func build() -> void:
 	for bx in [-HALF - 0.3, STRIP_MAX + 0.45]:
 		K.box(self, Vector3(0.3, 1.1, BRIDGE_START - BRIDGE_END), Vector3(bx, 0.55, (BRIDGE_START + BRIDGE_END) / 2.0), Color(0.7, 0.7, 0.72), true)
 	sign_board("前方無人行道\n請繞行對向人行道", Vector3(STRIP_MAX + 1.0, 0, BRIDGE_START + 8.0), 0.0, Color(0.8, 0.15, 0.15), 2.0)
+	sign_board("機車請靠右 ↗\n走橋上機車道", Vector3(HALF + 1.2, 0, 20.0), 0.0, Color(0.15, 0.35, 0.75), 2.2)
+	# Guide line and arrows steering scooters from the right lane into the strip.
+	K.line(self, Vector2(HALF - 1.0, 5.0), Vector2(STRIP_MIN + 0.2, BRIDGE_START), K.WHITE, K.LINE_W, 1.5)
+	for gz in [10.0, -8.0]:
+		K.ground_text(self, "機\n車\n↗", Vector2(5.25, gz), K.WHITE, 0.0, 0.007)
 	sign_board("公司", Vector3(HALF + 1.5, 0, -280.0), -PI / 2.0, Color(0.3, 0.3, 0.35), 2.5)
 	buildings_ns(HALF + 12.0, 0.0, 60.0, -1)
 	buildings_ns(-HALF - 12.0, 0.0, 60.0, 1)
 	buildings_ns(HALF + 12.0, -300.0, BRIDGE_END - 15.0, -1)
 
 	_add_rules()
-	gps = [Vector3(5.25, 0, -285.0)]
+	gps = [Vector3(8.3, 0, BRIDGE_START - 5.0), Vector3(8.3, 0, BRIDGE_END + 5.0), Vector3(5.25, 0, -285.0)]
 
 
 func after_spawn() -> void:
-	# Two cyclists pedalling along the strip at ~13 km/h. Hitting one ends the run.
+	# Two cyclists pedalling along the strip at ~16 km/h. They start once you're close, and bumping
+	# into one just blocks you (and earns a bell) — the level is about patience, not reflexes.
 	for i in 2:
-		var start_z := BRIDGE_START - 10.0 - i * 25.0
+		var start_z := BRIDGE_START - 5.0 - i * 18.0
 		var npc := NpcVehicle.make_custom(self, _cyclist(i), AABB(Vector3(-0.3, 0, -0.9), Vector3(0.6, 1.7, 1.8)),
-			[Vector3(8.3, 0, start_z), Vector3(8.3, 0, BRIDGE_END - 40.0)] as Array[Vector3], 3.6)
-		npc.touched.connect(func() -> void: fail("撞到腳踏車了。"))
+			[Vector3(8.3, 0, start_z), Vector3(8.3, 0, BRIDGE_END - 40.0)] as Array[Vector3], 4.5)
+		npc.target = scooter
+		npc.trigger_distance = 45.0
+		npc.touched.connect(func() -> void: toast("腳踏車：叮叮！（橋上就這麼一條，你也只能跟著。）", 2.5))
 
 
 func _cyclist(i: int) -> Node3D:
 	var root := Node3D.new()
 	var shirt: Color = [Color(0.9, 0.5, 0.1), Color(0.3, 0.4, 0.9)][i % 2]
 	K.box(root, Vector3(0.08, 0.6, 1.5), Vector3(0, 0.45, 0), Color(0.1, 0.1, 0.1))
-	K.box(root, Vector3(0.4, 0.6, 0.3), Vector3(0, 1.2, -0.1), shirt)
+	K.box(root, Vector3(0.5, 0.7, 0.35), Vector3(0, 1.25, -0.1), shirt)
+	K.box(root, Vector3(0.1, 0.1, 0.1), Vector3(0, 1.1, -0.85), Color(1, 0.1, 0.1))  # tail light (visual faces +Z)
 	K.box(root, Vector3(0.25, 0.25, 0.25), Vector3(0, 1.65, -0.15), Color(0.95, 0.8, 0.65))
 	return root
 
 
 func _add_rules() -> void:
-	ViolationZone.make(self, Vector2(0.3, BRIDGE_END), Vector2(6.9, BRIDGE_START), "lane_ban", "oncoming_truck",
-		"橋上超車閃進汽車道罰 600；聯結車跨雙黃線逆向，只開跨雙黃線的話罰 1,400。", Vector3.FORWARD)
+	ViolationZone.make(self, Vector2(0.3, BRIDGE_END), Vector2(6.9, BRIDGE_START), "lane_ban", "ped_red,ambulance_tailgate",
+		"超一台腳踏車 600，比行人闖紅燈（500）還貴；跟在救護車屁股後面狂飆也才 900。", Vector3.FORWARD)
 	ViolationZone.make(self, Vector2(-HALF, -300.0), Vector2(-0.3, 60.0), "wrong_way")
 	goal(Vector2(0.3, -290.0), Vector2(HALF, -280.0))

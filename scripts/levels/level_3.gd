@@ -7,11 +7,15 @@ const HALF := 10.5  # arterial 3+3
 const WALK := 4.0
 const EW := 7.0  # cross street 2+2
 const STOP := 11.5
-const BOX_MIN := Vector2(11.0, -6.8)  # 待轉區, in the cross street just right of the arterial
-const BOX_MAX := Vector2(14.0, -3.8)
+# 待轉區 per the marking rules: in front of the crosswalk (x 14.3), rear edge >= 0.5 m from it,
+# front edge not past the arterial's edge (x 10.5). Deliberately shallow: overshoot and you're on the zebra.
+const BOX_MIN := Vector2(11.8, -6.6)
+const BOX_MAX := Vector2(13.8, -4.2)
 
 var sig: TrafficSignal
 var box: WaitBox
+var rusher: NpcVehicle  # the car behind the 待轉區 that floors it on green ("待撞區")
+var _rush_timer := 0.0
 
 
 func _init() -> void:
@@ -42,10 +46,10 @@ func build() -> void:
 	K.line(self, Vector2(-HALF, -STOP), Vector2(-0.2, -STOP), K.WHITE, 0.4)
 	K.line(self, Vector2(HALF + 7.3, -EW), Vector2(HALF + 7.3, -0.2), K.WHITE, 0.4)
 	K.line(self, Vector2(-HALF - 7.3, 0.2), Vector2(-HALF - 7.3, EW), K.WHITE, 0.4)
-	K.zebra(self, Vector2(-HALF, EW + 0.5), Vector2(HALF, EW + 3.5), "x")
-	K.zebra(self, Vector2(-HALF, -EW - 3.5), Vector2(HALF, -EW - 0.5), "x")
-	K.zebra(self, Vector2(HALF + 3.8, -EW), Vector2(HALF + 6.8, EW), "z")
-	K.zebra(self, Vector2(-HALF - 6.8, -EW), Vector2(-HALF - 3.8, EW), "z")
+	crosswalk(Vector2(-HALF, EW + 0.5), Vector2(HALF, EW + 3.5), "x")
+	crosswalk(Vector2(-HALF, -EW - 3.5), Vector2(HALF, -EW - 0.5), "x")
+	crosswalk(Vector2(HALF + 3.8, -EW), Vector2(HALF + 6.8, EW), "z")
+	crosswalk(Vector2(-HALF - 6.8, -EW), Vector2(-HALF - 3.8, EW), "z")
 
 	# Approach: 禁行機車 inside, 機車停等區 in the outer lane — occupied by cars.
 	for z in [30.0, 70.0]:
@@ -82,16 +86,32 @@ func build() -> void:
 
 func _add_rules() -> void:
 	var fwd := Vector3.FORWARD
-	ViolationZone.make(self, Vector2(-150.0, -EW), Vector2(-0.5, EW), "two_stage_left", "car_in_box",
-		"直接左轉罰 600；霸佔機車停等區、害你進不去的汽車，罰 900。", Vector3.LEFT).when(func() -> bool: return not box.waited)
-	ViolationZone.make(self, Vector2(0.3, EW + 0.5), Vector2(HALF, STOP - 0.2), "red_light", "car_in_box", "", fwd) \
-		.when(func() -> bool: return sig.is_red("ns"))
+	ViolationZone.make(self, Vector2(-150.0, -EW), Vector2(-0.5, EW), "two_stage_left", "turn_no_yield,car_in_box",
+		"你少停一次待轉區 600；汽車轉彎不讓直行車、把人撞飛，才 900。", Vector3.LEFT).when(func() -> bool: return not box.waited)
+	StopLineRule.make(self, sig, "ns", Vector3.FORWARD, Vector3(0, 0, STOP), 0.3, HALF)
 	# Leaving the 待轉區 before the cross street turns green. (A direct left turn is two_stage_left instead.)
-	ViolationZone.make(self, Vector2(-HALF, -EW), Vector2(HALF, -0.3), "red_light", "", "", Vector3.LEFT) \
+	ViolationZone.make(self, Vector2(-HALF, -EW), Vector2(HALF, -0.3), "red_light", "ped_red",
+		"待轉區提早一秒出發＝闖紅燈 1,800，是行人闖紅燈（500）的 3.6 倍。", Vector3.LEFT) \
 		.when(func() -> bool: return box.waited and sig.is_red("ew"))
 	ViolationZone.make(self, Vector2(0.3, STOP), Vector2(6.8, 95.0), "lane_ban", "car_in_box",
-		"閃開佔住停等區的汽車、閃進禁行機車道罰 600；那台汽車罰 900。", fwd)
+		"閃開霸佔停等區的汽車，你罰 600；那台汽車整台停在機車格裡，也才 900。", fwd)
 	ViolationZone.make(self, Vector2(-HALF, -120.0), Vector2(-0.3, -EW - 0.5), "wrong_way")
 	ViolationZone.make(self, Vector2(-HALF, EW + 0.5), Vector2(-0.3, 95.0), "wrong_way")
 	ViolationZone.make(self, Vector2(HALF + CURB, EW + WALK), Vector2(HALF + WALK, 95.0), "sidewalk")
 	goal(Vector2(-100.0, -EW), Vector2(-90.0, 0.0))
+
+
+func after_spawn() -> void:
+	# Waiting at the westbound stop line right behind the 待轉區; floors it 1.2 s after green.
+	var path: Array[Vector3] = [Vector3(HALF + 10.0, 0, -5.25), Vector3(-150.0, 0, -5.25)]
+	rusher = NpcVehicle.make(self, CARS + "sedan.glb", 4.4, path, 10.0)
+	rusher.hold = true
+	rusher.touched.connect(func() -> void:
+		fail("待轉區又叫「待撞區」：綠燈一亮，後面的車就衝過來了。"))
+
+
+func _physics_process(delta: float) -> void:
+	if rusher.hold and sig.state("ew") == "green":
+		_rush_timer += delta
+		if _rush_timer > 1.2:
+			rusher.hold = false
