@@ -13,6 +13,7 @@ const LEVELS: Array[String] = [
 	"res://scenes/levels/level_4.tscn",
 	"res://scenes/levels/level_5.tscn",
 	"res://scenes/levels/level_6.tscn",
+	"res://scenes/levels/level_7.tscn",
 ]
 const SUMMARY := "res://scenes/summary.tscn"
 const KEYS := {

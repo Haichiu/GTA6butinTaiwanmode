@@ -24,6 +24,14 @@
     "ambulance_tailgate": {"title": "跟在救護車後面急駛", "article": "道路交通管理處罰條例 第45條第1項第11款", "fine": 900, "points": 1},
     "car_speeding": {"title": "汽車超速（20 公里以內）", "article": "道路交通管理處罰條例 第40條", "fine": 1600, "points": 1},
     "ped_red": {"title": "行人闖紅燈", "article": "道路交通管理處罰條例 第78條第1項第1款", "fine": 500, "points": 0},
+    "no_left_turn": {"title": "不依標誌指示（禁止左轉時段左轉）", "article": "道路交通管理處罰條例 第48條第1項第2款", "fine": 600, "points": 1},
+    "uturn_no_left": {"title": "在禁止左轉路段迴車", "article": "道路交通管理處罰條例 第49條第1項第3款", "fine": 900, "points": 1},
+    "uturn_double_yellow": {"title": "在劃有分向限制線（雙黃線）路段迴車", "article": "道路交通管理處罰條例 第49條第1項第2款", "fine": 900, "points": 1},
+    "ped_jaywalk": {"title": "行人擅自穿越車道", "article": "道路交通管理處罰條例 第78條第1項第3款", "fine": 500, "points": 0},
+    "ped_play": {"title": "在車多的道路上奔跑、追逐、嬉遊", "article": "道路交通管理處罰條例 第78條第1項第4款", "fine": 500, "points": 0},
+    "pet_owner": {"title": "飼主放任狗在道路奔走", "article": "道路交通管理處罰條例 第84條", "fine": 300, "points": 0},
+    "throw_object": {"title": "在道路拋擲足以妨礙交通之物", "article": "道路交通管理處罰條例 第82條第1項第1款", "fine": 1200, "points": 0},
+    "rear_end": {"title": "一般道路追撞前車（未保持安全距離）", "article": "處罰條例對一般道路未保持安全距離沒有明定罰鍰（國道才有：第33條第1項第2款，3,000–6,000）", "fine": 0, "points": 0},
     "rail_crossing": {"title": "平交道警鈴已響仍強行闖越（機車）", "article": "道路交通管理處罰條例 第54條第1款", "fine": 67500, "points": 0}
   }
 }

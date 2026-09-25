@@ -11,7 +11,14 @@ const Z_END := -320.0
 
 func _init() -> void:
 	title = "空蕩蕩的內側車道"
-	objective = "騎到 300 公尺外的便當店。機車只能騎最外側車道。（方向鍵／WASD）"
+	who = "上班族・07:52"
+	objective = "八點打卡，今天再遲到就沒有全勤獎金了。公司在這條路直走到底。"
+	deadline = 40.0
+	deadline_name = "打卡"
+	place = "公司"
+	waiting_person = false
+	ending = "打卡機：「嗶——07:59:58」\n全勤獎金保住了。"
+	late_ending = "打卡機：「嗶——08:00:03」\n全勤獎金，下個月見。"
 
 
 func spawn_transform() -> Transform3D:
@@ -37,7 +44,7 @@ func build() -> void:
 		["delivery", -175.0, 6.0], ["taxi", -215.0, 4.5], ["van", -250.0, 5.0]]
 	for p in parked:
 		model(CARS + p[0] + ".glb", Vector3(9.5, 0, p[1]), PI, p[2], true)
-	sign_board("便當", Vector3(HALF + 1.5, 0, -300.0), -PI / 2.0, Color(0.8, 0.25, 0.15), 2.5)
+	sign_board("股份有限公司", Vector3(HALF + 1.5, 0, -300.0), -PI / 2.0, Color(0.3, 0.3, 0.35), 2.5)
 
 	ViolationZone.make(self, Vector2(0.3, Z_END), Vector2(6.8, Z_START), "lane_ban", "ped_red,sidewalk",
 		"在一條空無一車的車道上騎車 600，比行人闖紅燈（500）還貴。", Vector3.FORWARD)
