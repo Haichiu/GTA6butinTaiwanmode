@@ -20,6 +20,10 @@ func _ready() -> void:
 	box.add_child(_label("按空白鍵開始", 28, Color(0.7, 0.9, 1.0)))
 	_gm_hint = _label("", 20, Color(1, 0.85, 0.3))
 	box.add_child(_gm_hint)
+	# Tribute: this game exists because of Asian Difficulty.
+	var credit := _label("致敬 AnyueDontSnipe《亞洲人難度 Asian Difficulty》（其靈感來自 Steven He 與 Uncle Roger）", 16, Color(0.6, 0.6, 0.6))
+	credit.position = Vector2(140, 670)
+	add_child(credit)
 
 
 func _process(_delta: float) -> void:
