@@ -5,19 +5,15 @@ extends Node
 ## [level, file name, scooter position, yaw]; position null = spawn point.
 const SHOTS := [
 	[1, "l1_start", null, 0.0],
-	[1, "l1_squeeze", Vector3(7.7, 0.1, -25.0), 0.0],
+	[1, "l1_uncle", Vector3(7.7, 0.1, -128.0), 0.0],
+	[1, "l1_goal", Vector3(8.75, 0.1, -275.0), 0.0],
 	[2, "l2_approach", Vector3(8.75, 0.1, 40.0), 0.0],
-	[2, "l2_detour", Vector3(62.0, 0.1, -20.0), 0.0],
-	[3, "l3_stopbox", Vector3(9.9, 0.1, 28.0), 0.0],
 	[3, "l3_waitbox", Vector3(12.8, 0.1, -5.4), PI / 2.0],
-	[4, "l4_start", null, 0.0],
-	[4, "l4_waitbox", Vector3(-9.3, 0.1, -5.4), -PI / 2.0],
-	[5, "l5_entry", Vector3(5.25, 0.1, 22.0), 0.0],
-	[5, "l5_bridge", Vector3(8.3, 0.1, -40.0), 0.0],
-	[6, "l6_ramp", Vector3(5.25, 0.1, -20.0), 0.0],
-	[6, "l6_truck", Vector3(8.3, 0.1, -230.0), 0.0],
-	[6, "l6_ticket", Vector3(5.25, 0.1, -20.0), 0.0, "highway_scooter"],
-	[3, "l3_ticket", Vector3(9.9, 0.1, 30.0), 0.0, "two_stage_left"],
+	[5, "l5_approach", Vector3(1.75, 0.1, 22.0), 0.0],
+	[5, "l5_sign", Vector3(1.75, 0.1, 12.0), 0.0],
+	[6, "l6_entry", Vector3(5.25, 0.1, 8.0), 0.0],
+	[6, "l6_exit", Vector3(8.3, 0.1, -170.0), 0.0],
+	[7, "l7_ticket", Vector3(5.25, 0.1, -20.0), 0.0, "highway_scooter"],
 ]
 
 
@@ -47,7 +43,7 @@ func _ready() -> void:
 			level.truck.global_position = Vector3(3.8, 0, -265.0)
 			level.truck.rotation.y = 0.0
 			level.truck.set_physics_process(false)
-		await _frames(30)
+		await _frames(150 if s[1] == "l1_uncle" else 30)
 		await _shot("%s/%s.png" % [out_dir, s[1]])
 		level.queue_free()
 		await _frames(2)

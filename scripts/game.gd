@@ -29,6 +29,8 @@ var total_fine := 0
 var total_points := 0
 var tickets: Array[String] = []  # law ids charged to the player, in order
 var level_index := 0
+## Hazards and ambient traffic. Rule tests switch this off so they stay deterministic.
+var ambient := true
 var sfx: Sfx
 
 

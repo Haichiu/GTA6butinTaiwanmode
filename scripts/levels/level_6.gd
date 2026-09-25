@@ -107,3 +107,7 @@ func _add_rules() -> void:
 		"超一台腳踏車 600，比行人闖紅燈（500）還貴；跟在救護車屁股後面狂飆也才 900。", Vector3.FORWARD)
 	ViolationZone.make(self, Vector2(-HALF, -300.0), Vector2(-0.3, 60.0), "wrong_way")
 	goal(Vector2(0.3, -290.0), Vector2(HALF, -280.0))
+	# Cars fly past in the lanes you're not allowed in.
+	traffic([Vector3(5.25, 0, 60.0), Vector3(5.25, 0, -300.0)] as Array[Vector3], 14.0, 3.0)
+	traffic([Vector3(1.75, 0, 60.0), Vector3(1.75, 0, -300.0)] as Array[Vector3], 15.0, 4.5, Callable(), 1.5)
+	traffic([Vector3(-5.25, 0, -300.0), Vector3(-5.25, 0, 60.0)] as Array[Vector3], 13.0, 4.0)

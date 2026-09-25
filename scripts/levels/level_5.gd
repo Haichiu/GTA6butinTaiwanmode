@@ -79,6 +79,10 @@ func _add_rules() -> void:
 		ViolationZone.make(self, Vector2(-HALF, seg[0]), Vector2(-0.3, seg[1]), "wrong_way", "", "", Vector3.FORWARD)
 	ViolationZone.make(self, Vector2(-150.0, 0.3), Vector2(-HALF - 6.0, A_HALF), "wrong_way", "", "", Vector3.LEFT)
 	goal(Vector2(-85.0, -A_HALF), Vector2(-75.0, 0.0))
+	# School zone: a ball, then a kid.
+	darter("ball", Vector3(-50.0, 0, -12.0), Vector3(-50.0, 0, 12.0), 26.0)
+	traffic([Vector3(5.25, 0, 95.0), Vector3(5.25, 0, -200.0)] as Array[Vector3], 11.0, 5.0)
+	traffic([Vector3(-5.25, 0, -200.0), Vector3(-5.25, 0, 95.0)] as Array[Vector3], 11.0, 6.0, Callable(), 3.0)
 	# Reaching the next intersection makes the U-turn (and the way back) legitimate.
 	on_enter(Vector2(-HALF, B_Z - B_HALF), Vector2(HALF, B_Z + B_HALF), func() -> void:
 		_reached_b = true

@@ -7,9 +7,13 @@ extends Node
 var _failures := 0
 var _checks := 0  # expectations evaluated in the current case
 var _level: LevelBase
+var _last_uncharged := ""  # most recent ticket issued to someone else
 
 
 func _ready() -> void:
+	Game.violated.connect(func(law_id: String, _c: String, _cap: String, charged: bool) -> void:
+		if not charged:
+			_last_uncharged = law_id)
 	var only := OS.get_cmdline_user_args()
 	for case in _cases():
 		if only.size() > 0 and not only.has(str(case[0])):
@@ -132,11 +136,77 @@ func _cases() -> Array:
 		[7, "合法路線：閃到路肩", func(l: LevelBase) -> void:
 			await _drive(l, [Vector3(8.3, 0, 20), Vector3(8.3, 0, -400), Vector3(5.25, 0, -426)], 13.0)
 			_expect_win(l)],
+
+		# --- Hazards and traffic (ambient on) ---
+		[1, "老阿伯衝出來：沒煞車撞上", func(l: LevelBase) -> void:
+			_teleport(l, Vector3(7.7, 0.1, -110.0), 0.0)
+			await _drive(l, [Vector3(7.7, 0, -170.0)], 10.0, 20.0)
+			_expect_hit(l, "ped_jaywalk"), "ambient"],
+		[1, "老阿伯衝出來：停下讓他過", func(l: LevelBase) -> void:
+			_teleport(l, Vector3(7.7, 0.1, -110.0), 0.0)
+			await _drive(l, [Vector3(7.7, 0, -126.0)], 6.0, 20.0, 1.0, false)
+			await _stop_and_wait(l, 0.0, func() -> bool: return true)
+			Input.action_press("brake")
+			await _frames(360)
+			Input.action_release("brake")
+			await _drive(l, [Vector3(7.7, 0, -270), Vector3(8.75, 0, -296)], 7.0)
+			_expect_win(l), "ambient"],
+		[5, "學校前小孩追球：撞上小孩", func(l: LevelBase) -> void:
+			l._reached_b = true
+			_teleport(l, Vector3(-30.0, 0.1, -3.5), PI / 2.0)  # close enough to set the ball rolling
+			var kid := await _wait_for_npc(l, func(n: NpcVehicle) -> bool: return n.speed == 3.0 and n.global_position.z > -7.0)
+			_teleport(l, Vector3(kid.global_position.x + 3.0, 0.1, kid.global_position.z + 1.0), PI / 2.0)
+			l.scooter.speed = 4.0
+			Input.action_press("accelerate")
+			await _frames(40)
+			_expect_hit(l, "ped_play"), "ambient"],
+		[7, "追撞前車：一般道路 0 元", func(l: LevelBase) -> void:
+			var car: NpcVehicle = null
+			for i in 600:
+				await get_tree().physics_frame
+				for n in l.find_children("*", "NpcVehicle", true, false):
+					if n.free_at_end and n.global_position.x > 0.0 and n.global_position.z < 0.0:
+						car = n
+				if car != null:
+					break
+			_teleport(l, car.global_position + Vector3(0, 0.1, 5.0), 0.0)
+			l.scooter.speed = 14.0
+			l.scooter.max_speed = 20.0  # test only: guarantee closing speed on a 13 m/s car
+			Input.action_press("accelerate")
+			await _frames(90)
+			_expect_tickets(["rear_end"])
+			_checks += 1
+			if Game.total_fine != 0:
+				_fail("rear-end should cost 0, got %d" % Game.total_fine), "ambient"],
 	]
+
+
+func _wait_for_npc(l: LevelBase, pred: Callable, max_frames := 900) -> NpcVehicle:
+	for i in max_frames:
+		for n in l.find_children("*", "NpcVehicle", true, false):
+			if pred.call(n):
+				return n
+		await get_tree().physics_frame
+	_fail("npc never appeared")
+	return null
+
+
+func _teleport(l: LevelBase, pos: Vector3, yaw: float) -> void:
+	l.scooter.global_transform = Transform3D(Basis(Vector3.UP, yaw), pos)
+	l.scooter.speed = 0.0
+
+
+## Ran into a person/animal: the run ends with *their* ticket, nothing charged to you.
+func _expect_hit(l: LevelBase, law_id: String) -> void:
+	_checks += 1
+	if not (l._ended and not l._won and Game.tickets.is_empty() and _last_uncharged == law_id):
+		_fail("expected to hit someone (%s); ended=%s won=%s tickets=%s last=%s" % [law_id, l._ended, l._won, Game.tickets, _last_uncharged])
 
 
 func _run(case: Array) -> void:
 	Game.reset()
+	_last_uncharged = ""
+	Game.ambient = case.size() > 3 and case[3] == "ambient"
 	Game.level_index = case[0] - 1
 	var inst: Node = load(Game.LEVELS[case[0] - 1]).instantiate()
 	if not inst is LevelBase:

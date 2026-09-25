@@ -106,6 +106,11 @@ func _add_rules() -> void:
 	ViolationZone.make(self, Vector2(HALF + 2.0, -EW), Vector2(150.0, EW), "wrong_way", "", "", Vector3.LEFT)
 	ViolationZone.make(self, Vector2(-HALF - WALK, EW + WALK), Vector2(-HALF - CURB, 95.0), "sidewalk")
 	goal(Vector2(90.0, -EW), Vector2(100.0, EW))
+	var ns_go := func() -> bool: return sig.state("ns") == "green" and sig.remaining > 3.0
+	var ew_go := func() -> bool: return sig.state("ew") == "green" and sig.remaining > 3.0
+	traffic([Vector3(-1.75, 0, 60.0), Vector3(-1.75, 0, -120.0)] as Array[Vector3], 11.0, 4.0, ns_go)
+	traffic([Vector3(1.75, 0, 60.0), Vector3(1.75, 0, -120.0)] as Array[Vector3], 12.0, 5.0, ns_go, 2.0)
+	traffic([Vector3(-40.0, 0, 3.5), Vector3(150.0, 0, 3.5)] as Array[Vector3], 11.0, 3.0, ew_go)
 
 
 func after_spawn() -> void:
@@ -113,6 +118,8 @@ func after_spawn() -> void:
 	var path: Array[Vector3] = [Vector3(-HALF - 10.5, 0, -5.25), Vector3(150.0, 0, -5.25)]
 	rusher = NpcVehicle.make(self, CARS + "taxi.glb", 4.4, path, 10.0)
 	rusher.hold = true
+	rusher.yields = false  # it is supposed to hit you
+	rusher.target = scooter
 	rusher.touched.connect(func() -> void:
 		fail("待轉區又叫「待撞區」：綠燈一亮，後面的計程車就衝過來了。"))
 

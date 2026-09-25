@@ -53,6 +53,9 @@ func build() -> void:
 			"機車上國道 4,000 ＞ 聯結車逆向 1,400＋汽車超速 1,600＋轉彎不讓直行車 900。三條加起來，還找你 100 元。")
 	ViolationZone.make(self, Vector2(-HALF, Z_END), Vector2(-0.3, 60.0), "wrong_way")
 	goal(Vector2(0.3, -430.0), Vector2(SHOULDER, -420.0))
+	traffic([Vector3(1.75, 0, 60.0), Vector3(1.75, 0, Z_END)] as Array[Vector3], 13.0, 6.0)
+	traffic([Vector3(-5.25, 0, Z_END), Vector3(-5.25, 0, 80.0)] as Array[Vector3], 13.0, 5.0)
+	darter("dog", Vector3(-12.0, 0, -150.0), Vector3(14.0, 0, -150.0), 24.0)
 	gps = [Vector3(RAMP_FROM.x + 3.0, 0, RAMP_FROM.y - 10.0), Vector3(RAMP_TO.x, 0, RAMP_TO.y),
 		Vector3(37.0, 0, -300.0), Vector3(5.25, 0, -425.0)]
 	# Ride past the on-ramp and the GPS gives up on the freeway.
@@ -68,6 +71,7 @@ func after_spawn() -> void:
 		Vector3(3.8, 0, -240.0), Vector3(-3.5, 0, -210.0), Vector3(-3.5, 0, 80.0)]
 	truck = NpcVehicle.make_custom(self, _semi_truck(), AABB(Vector3(-1.3, 0, -11.0), Vector3(2.6, 4.0, 16.0)), path, 12.0)
 	truck.target = scooter
+	truck.yields = false  # it is supposed to hit you
 	# Timed so the truck is in your lane roughly when a rider at full speed gets there.
 	truck.trigger_distance = 330.0
 	truck.touched.connect(_on_truck_hit)

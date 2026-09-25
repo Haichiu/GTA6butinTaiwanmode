@@ -13,10 +13,17 @@ var trigger_distance := 0.0
 var target: Node3D
 ## While true the vehicle waits in place (e.g. at a red light); the level releases it.
 var hold := false
+## Ordinary traffic stops for a scooter right in front of it. Scripted "hit you" vehicles don't.
+var yields := true
+## Remove the vehicle when it reaches the end of its path (traffic streams).
+var free_at_end := false
+## Seconds to stand still on arriving at a waypoint index (e.g. 老阿伯 stopping mid-lane).
+var dwell := {}
 
 var _index := 1
 var _active := false
 var _done := false
+var _wait := 0.0
 
 
 ## Build from a model scene (Kenney vehicles face +Z) scaled to `length` meters.
@@ -48,7 +55,8 @@ static func make_custom(parent: Node3D, visual: Node3D, bounds: AABB, points: Ar
 	var sensor := Area3D.new()
 	var sensor_shape := CollisionShape3D.new()
 	var grown := BoxShape3D.new()
-	grown.size = box.size + Vector3(0.4, 0.4, 0.4)
+	# Solid bodies stop just short of each other, so the sensor must reach past the collider.
+	grown.size = box.size + Vector3(1.0, 0.4, 1.0)
 	sensor_shape.shape = grown
 	sensor_shape.position = shape.position
 	sensor.add_child(sensor_shape)
@@ -70,21 +78,41 @@ func _physics_process(delta: float) -> void:
 		_active = trigger_distance <= 0.0 or (target != null and target.global_position.distance_to(global_position) < trigger_distance)
 		if not _active:
 			return
+	if _wait > 0.0:
+		_wait -= delta
+		return
 	var goal := waypoints[_index]
 	var to_goal := goal - global_position
+	if yields and _blocked_by_target(to_goal):
+		return
 	var step := speed * delta
 	if to_goal.length() <= step:
 		global_position = goal
+		_wait = dwell.get(_index, 0.0)
 		_index += 1
 		if _index >= waypoints.size():
 			if loop:
 				_index = 0
 			else:
 				_done = true
+				if free_at_end:
+					queue_free()
 				return
 		_face(waypoints[_index] - global_position)
 	else:
 		global_position += to_goal.normalized() * step
+
+
+## Is the scooter just ahead of us along our direction of travel?
+func _blocked_by_target(to_goal: Vector3) -> bool:
+	if target == null or to_goal.length() < 0.01:
+		return false
+	var dir := Vector3(to_goal.x, 0, to_goal.z).normalized()
+	var rel := target.global_position - global_position
+	rel.y = 0.0
+	var ahead := rel.dot(dir)
+	var lateral := (rel - dir * ahead).length()
+	return ahead > 0.0 and ahead < 9.0 and lateral < 1.8
 
 
 func _face(dir: Vector3) -> void:
