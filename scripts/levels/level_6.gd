@@ -41,10 +41,9 @@ func build() -> void:
 	sign_board("目的地", Vector3(SHOULDER + 1.5, 0, -425.0), -PI / 2.0, Color(0.1, 0.55, 0.25), 2.5)
 	buildings_ns(-HALF - 14.0, Z_END, 60.0, 1)
 
-	ViolationZone.make(self, Vector2(14.0, -125.0), Vector2(HWY_MIN - 1.0, -65.0), "highway_scooter", "oncoming_truck",
-		"機車騎上國道罰 4,000；等一下那台跨雙黃線逆向的聯結車，只開跨雙黃線的話罰 1,400。")
-	ViolationZone.make(self, Vector2(HWY_MIN - 1.0, Z_END), Vector2(HWY_MAX, -115.0), "highway_scooter", "oncoming_truck",
-		"機車騎上國道罰 4,000；聯結車跨雙黃線逆向，只開跨雙黃線的話罰 1,400。")
+	for zone in [[Vector2(14.0, -125.0), Vector2(HWY_MIN - 1.0, -65.0)], [Vector2(HWY_MIN - 1.0, Z_END), Vector2(HWY_MAX, -115.0)]]:
+		ViolationZone.make(self, zone[0], zone[1], "highway_scooter", "oncoming_truck,car_speeding,turn_no_yield",
+			"機車上國道 4,000 ＞ 聯結車逆向 1,400＋汽車超速 1,600＋轉彎不讓直行車 900。三條加起來，還找你 100 元。")
 	ViolationZone.make(self, Vector2(-HALF, Z_END), Vector2(-0.3, 60.0), "wrong_way")
 	goal(Vector2(0.3, -430.0), Vector2(SHOULDER, -420.0))
 	gps = [Vector3(RAMP_FROM.x + 3.0, 0, RAMP_FROM.y - 10.0), Vector3(RAMP_TO.x, 0, RAMP_TO.y),

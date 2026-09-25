@@ -41,13 +41,14 @@ func show_ticket(law_id: String, contrast_id: String, caption: String, charged :
 	var points := "　記違規點數 %d 點" % l["points"] if int(l["points"]) > 0 else ""
 	box.add_child(_label("罰鍰：新臺幣 %s 元%s" % [_money(l["fine"]), points], 30, STAMP, true))
 
-	if contrast_id != "":
+	# contrast_id may list several laws separated by commas.
+	if contrast_id != "" or caption != "":
 		box.add_child(HSeparator.new())
-		var c := Game.law(contrast_id)
-		if caption != "":
-			box.add_child(_label(caption, 22, INK, true))
-		box.add_child(_label("對照：%s　新臺幣 %s 元" % [c["title"], _money(c["fine"])], 20, INK))
-		box.add_child(_label(c["article"], 16, INK.lightened(0.3)))
+	if caption != "":
+		box.add_child(_label(caption, 24, STAMP, true))
+	for cid in contrast_id.split(",", false):
+		var c := Game.law(cid.strip_edges())
+		box.add_child(_label("對照：%s　新臺幣 %s 元（%s）" % [c["title"], _money(c["fine"]), _short(c["article"])], 18, INK))
 
 	box.add_child(HSeparator.new())
 	box.add_child(_label("今日累計罰款：新臺幣 %s 元" % _money(Game.total_fine), 20, INK))
@@ -85,6 +86,11 @@ func _label(text: String, size: int, color: Color, bold := false) -> Label:
 	if bold:
 		label.add_theme_font_override("font", RoadKit.font())
 	return label
+
+
+## "道路交通管理處罰條例 第48條第1項第6款" -> "第48條第1項第6款"
+static func _short(article: String) -> String:
+	return article.replace("道路交通管理處罰條例 ", "")
 
 
 static func _money(amount) -> String:

@@ -238,6 +238,14 @@ func model(path: String, pos: Vector3, rot_y := 0.0, size := 0.0, collide := fal
 	return holder
 
 
+## Zebra crossing plus its rule: coming to a stop on it is a ticket (60-2-3).
+func crosswalk(min_xz: Vector2, max_xz: Vector2, along: String) -> void:
+	K.zebra(self, min_xz, max_xz, along)
+	ViolationZone.make(self, min_xz, max_xz, "crosswalk_stop", "ped_red,turn_ignore_ped",
+		"停下來時壓到斑馬線 900；行人闖紅燈 500，汽車轉彎不看行人 900。") \
+		.when(func() -> bool: return scooter != null and scooter.speed < 0.2)
+
+
 ## Floating sign (e.g. 兩段式左轉 / 國道入口) on a pole.
 func sign_board(text: String, pos: Vector3, facing_y: float, bg := Color(0.15, 0.35, 0.75), height := 4.0) -> void:
 	var root := Node3D.new()
@@ -311,11 +319,12 @@ func _setup_environment() -> void:
 
 func _build_arrow() -> Node3D:
 	var root := Node3D.new()
+	# A HUD element living in 3D: flat color, no lighting, no shadow on the road.
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(0.2, 0.75, 1.0)
-	mat.emission_enabled = true
-	mat.emission = Color(0.1, 0.5, 0.9)
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	var shaft := MeshInstance3D.new()
+	shaft.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var box := BoxMesh.new()
 	box.size = Vector3(0.25, 0.08, 1.0)
 	box.material = mat
@@ -323,6 +332,7 @@ func _build_arrow() -> Node3D:
 	shaft.position.z = 0.2
 	root.add_child(shaft)
 	var head := MeshInstance3D.new()
+	head.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var prism := PrismMesh.new()
 	prism.size = Vector3(0.8, 0.7, 0.08)
 	prism.material = mat

@@ -8,11 +8,15 @@ const HALF := 7.0  # 4 lanes, all northbound
 const WALK := 4.0
 const EW := 7.0  # cross street, one-way eastbound, 4 lanes
 const STOP := 11.5
-const BOX_MIN := Vector2(-11.0, -6.8)  # 待轉區 at the far-left corner, facing east
-const BOX_MAX := Vector2(-8.0, -3.8)
+# 待轉區 at the far-left corner, facing east: in front of the west crosswalk (x -10.8) with a 0.5 m
+# gap, front edge not past the one-way road's edge (x -7). Shallow on purpose.
+const BOX_MIN := Vector2(-10.3, -6.6)
+const BOX_MAX := Vector2(-8.3, -4.2)
 
 var sig: TrafficSignal
 var box: WaitBox
+var rusher: NpcVehicle
+var _rush_timer := 0.0
 
 
 func _init() -> void:
@@ -41,9 +45,9 @@ func build() -> void:
 	lines_ew(zs, ["edge", "dash", "dash", "dash", "edge"], -150.0, -HALF - 7.5)
 	K.line(self, Vector2(-HALF, STOP), Vector2(HALF, STOP), K.WHITE, 0.4)
 	K.line(self, Vector2(-HALF - 7.3, -EW), Vector2(-HALF - 7.3, EW), K.WHITE, 0.4)
-	K.zebra(self, Vector2(-HALF, EW + 0.5), Vector2(HALF, EW + 3.5), "x")
-	K.zebra(self, Vector2(-HALF - 6.8, -EW), Vector2(-HALF - 3.8, EW), "z")
-	K.zebra(self, Vector2(HALF + 3.8, -EW), Vector2(HALF + 6.8, EW), "z")
+	crosswalk(Vector2(-HALF, EW + 0.5), Vector2(HALF, EW + 3.5), "x")
+	crosswalk(Vector2(-HALF - 6.8, -EW), Vector2(-HALF - 3.8, EW), "z")
+	crosswalk(Vector2(HALF + 3.8, -EW), Vector2(HALF + 6.8, EW), "z")
 	for z in [30.0, 70.0]:
 		for lane_x in [-1.75, 1.75]:
 			K.ground_text(self, "禁\n行\n機\n車", Vector2(lane_x, z), K.YELLOW)
@@ -80,11 +84,12 @@ func build() -> void:
 func _add_rules() -> void:
 	var fwd := Vector3.FORWARD
 	ViolationZone.make(self, Vector2(0.5, -EW), Vector2(150.0, EW), "two_stage_right", "no_helmet",
-		"少了一段待轉罰 600；少了一頂安全帽罰 500。", Vector3.RIGHT).when(func() -> bool: return not box.waited)
-	ViolationZone.make(self, Vector2(-HALF, EW + 0.5), Vector2(HALF, STOP - 0.2), "red_light", "", "", fwd) \
-		.when(func() -> bool: return sig.is_red("ns"))
+		"少轉一段 600 ＞ 不戴安全帽 500：法律覺得你少等一個紅燈，比你的頭還危險。", Vector3.RIGHT) \
+		.when(func() -> bool: return not box.waited)
+	StopLineRule.make(self, sig, "ns", Vector3.FORWARD, Vector3(0, 0, STOP), -HALF, HALF)
 	# Leaving the 待轉區 before the cross street turns green. (A direct right turn is two_stage_right instead.)
-	ViolationZone.make(self, Vector2(-HALF, -EW), Vector2(HALF, EW), "red_light", "", "", Vector3.RIGHT) \
+	ViolationZone.make(self, Vector2(-HALF, -EW), Vector2(HALF, EW), "red_light", "ped_red",
+		"待轉區提早一秒出發＝闖紅燈 1,800，是行人闖紅燈（500）的 3.6 倍。", Vector3.RIGHT) \
 		.when(func() -> bool: return box.waited and sig.is_red("ew"))
 	ViolationZone.make(self, Vector2(-3.3, STOP), Vector2(3.3, 95.0), "lane_ban", "", "", fwd)
 	# One-way streets: going against them is wrong-way.
@@ -94,3 +99,19 @@ func _add_rules() -> void:
 	ViolationZone.make(self, Vector2(HALF + 2.0, -EW), Vector2(150.0, EW), "wrong_way", "", "", Vector3.LEFT)
 	ViolationZone.make(self, Vector2(-HALF - WALK, EW + WALK), Vector2(-HALF - CURB, 95.0), "sidewalk")
 	goal(Vector2(90.0, -EW), Vector2(100.0, EW))
+
+
+func after_spawn() -> void:
+	# Waiting at the eastbound stop line right behind the 待轉區 ("待撞區"); floors it 1.2 s after green.
+	var path: Array[Vector3] = [Vector3(-HALF - 10.5, 0, -5.25), Vector3(150.0, 0, -5.25)]
+	rusher = NpcVehicle.make(self, CARS + "taxi.glb", 4.4, path, 10.0)
+	rusher.hold = true
+	rusher.touched.connect(func() -> void:
+		fail("待轉區又叫「待撞區」：綠燈一亮，後面的計程車就衝過來了。"))
+
+
+func _physics_process(delta: float) -> void:
+	if rusher.hold and sig.state("ew") == "green":
+		_rush_timer += delta
+		if _rush_timer > 1.2:
+			rusher.hold = false

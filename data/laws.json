@@ -17,6 +17,13 @@
     "road_banquet": {"title": "未經許可在道路擺設筵席（辦桌）", "article": "道路交通管理處罰條例 第82條第1項第9款", "fine": 1200, "points": 0},
     "turn_lane_straight": {"title": "直行車占用轉彎專用車道", "article": "道路交通管理處罰條例 第48條第1項第7款", "fine": 600, "points": 1},
     "car_in_box": {"title": "汽車停在機慢車停等區", "article": "道路交通管理處罰條例 第60條第2項第3款", "fine": 900, "points": 0},
+    "stop_line": {"title": "紅燈時前輪越過停止線（不遵守標線指示）", "article": "道路交通管理處罰條例 第60條第2項第3款", "fine": 900, "points": 0},
+    "crosswalk_stop": {"title": "停等時壓到行人穿越道（不遵守標線指示）", "article": "道路交通管理處罰條例 第60條第2項第3款", "fine": 900, "points": 0},
+    "turn_no_yield": {"title": "汽車轉彎不讓直行車先行", "article": "道路交通管理處罰條例 第48條第1項第6款", "fine": 900, "points": 1},
+    "turn_ignore_ped": {"title": "汽車轉彎不注意來往行人", "article": "道路交通管理處罰條例 第48條第1項第1款", "fine": 900, "points": 1},
+    "ambulance_tailgate": {"title": "跟在救護車後面急駛", "article": "道路交通管理處罰條例 第45條第1項第11款", "fine": 900, "points": 1},
+    "car_speeding": {"title": "汽車超速（20 公里以內）", "article": "道路交通管理處罰條例 第40條", "fine": 1600, "points": 1},
+    "ped_red": {"title": "行人闖紅燈", "article": "道路交通管理處罰條例 第78條第1項第1款", "fine": 500, "points": 0},
     "rail_crossing": {"title": "平交道警鈴已響仍強行闖越（機車）", "article": "道路交通管理處罰條例 第54條第1款", "fine": 67500, "points": 0}
   }
 }

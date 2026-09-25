@@ -54,10 +54,27 @@ func _cases() -> Array:
 			_expect_tickets(["red_light"])],
 		[3, "合法路線：待轉區等橫向綠燈", func(l: LevelBase) -> void:
 			l.sig.setup(TrafficSignal.Phase.NS_GO, 30.0)
-			await _drive(l, [Vector3(9.9, 0, 40), Vector3(9.9, 0, 10), Vector3(12.5, 0, -3.0), Vector3(12.5, 0, -5.3)], 6.0)
+			await _into_box(l, [Vector3(9.9, 0, 40), Vector3(9.9, 0, 10), Vector3(12.0, 0, -1.0)], Vector3(12.8, 0, -5.4))
 			await _stop_and_wait(l, PI / 2.0, func() -> bool: return l.sig.state("ew") == "green")
-			await _drive(l, [Vector3(0, 0, -5.3), Vector3(-95, 0, -3.5)], 7.0)
+			await _drive(l, [Vector3(0, 0, -5.4), Vector3(-95, 0, -3.5)], 13.0)
 			_expect_win(l)],
+		[3, "待轉時車身壓到斑馬線", func(l: LevelBase) -> void:
+			await _teleport_expect(l, Vector3(13.9, 0.1, -5.4), PI / 2.0, ["crosswalk_stop"], 0.0)],
+		[3, "紅燈停車前輪壓過停止線", func(l: LevelBase) -> void:
+			l.sig.setup(TrafficSignal.Phase.EW_GO, 30.0)
+			await _teleport_expect(l, Vector3(8.75, 0.1, 11.5 - 0.3), 0.0, ["stop_line"], 0.0)],
+		[3, "紅燈只有車頭凸出停止線（勸導）", func(l: LevelBase) -> void:
+			l.sig.setup(TrafficSignal.Phase.EW_GO, 30.0)
+			await _teleport_expect(l, Vector3(8.75, 0.1, 11.5 + 0.75), 0.0, [], 0.0)],
+		[3, "待撞區：綠燈了還不走", func(l: LevelBase) -> void:
+			l.sig.setup(TrafficSignal.Phase.NS_GO, 30.0)
+			await _into_box(l, [Vector3(9.9, 0, 40), Vector3(9.9, 0, 10), Vector3(12.0, 0, -1.0)], Vector3(12.8, 0, -5.4))
+			await _stop_and_wait(l, PI / 2.0, func() -> bool: return l.sig.state("ew") == "green")
+			Input.action_press("brake")
+			await _frames(240)
+			_checks += 1
+			if not (l._ended and not l._won and Game.tickets.is_empty()):
+				_fail("expected to be rear-ended in the 待轉區 (ended=%s tickets=%s)" % [l._ended, Game.tickets])],
 
 		[4, "直接右轉", func(l: LevelBase) -> void:
 			l.sig.setup(TrafficSignal.Phase.NS_GO, 30.0)
@@ -69,21 +86,28 @@ func _cases() -> Array:
 			await _teleport_expect(l, Vector3(-5.25, 0.1, 30), PI, ["wrong_way"])],
 		[4, "合法路線：兩段式右轉", func(l: LevelBase) -> void:
 			l.sig.setup(TrafficSignal.Phase.NS_GO, 30.0)
-			await _drive(l, [Vector3(-5.25, 0, 10), Vector3(-6.5, 0, -2.0), Vector3(-9.5, 0, -5.3)], 6.0)
+			await _into_box(l, [Vector3(-5.25, 0, 10), Vector3(-7.5, 0, -1.0)], Vector3(-9.3, 0, -5.4))
 			await _stop_and_wait(l, -PI / 2.0, func() -> bool: return l.sig.state("ew") == "green")
-			await _drive(l, [Vector3(0, 0, -5.3), Vector3(95, 0, -3)], 7.0)
+			await _drive(l, [Vector3(0, 0, -5.4), Vector3(95, 0, -3)], 13.0)
 			_expect_win(l)],
 		[3, "待轉區還沒綠燈就出發", func(l: LevelBase) -> void:
 			l.sig.setup(TrafficSignal.Phase.NS_GO, 30.0)
-			await _drive(l, [Vector3(9.9, 0, 40), Vector3(9.9, 0, 10), Vector3(12.5, 0, -3.0), Vector3(12.5, 0, -5.3)], 6.0)
+			await _into_box(l, [Vector3(9.9, 0, 40), Vector3(9.9, 0, 10), Vector3(12.0, 0, -1.0)], Vector3(12.8, 0, -5.4))
 			await _stop_and_wait(l, PI / 2.0, func() -> bool: return true)
-			await _drive(l, [Vector3(0, 0, -5.3), Vector3(-40, 0, -3.5)], 7.0)
+			await _drive(l, [Vector3(0, 0, -5.4), Vector3(-40, 0, -3.5)], 7.0)
 			_expect_tickets(["red_light"])],
 
 		[5, "橋上超車閃進汽車道", func(l: LevelBase) -> void:
 			await _teleport_expect(l, Vector3(5.25, 0.1, -80), 0.0, ["lane_ban"])],
+		[5, "撞到腳踏車只會被擋住，不會失敗", func(l: LevelBase) -> void:
+			await _drive(l, [Vector3(5.25, 0, 0), Vector3(8.3, 0, -20), Vector3(8.3, 0, -120)], 10.0, 30.0)
+			_checks += 1
+			if l._ended:
+				_fail("bumping a cyclist should not end the level (tickets=%s)" % [Game.tickets])
+			await _drive(l, [Vector3(8.3, 0, -188), Vector3(5.25, 0, -210), Vector3(5.25, 0, -284)], 4.0, 150.0)
+			_expect_win(l)],
 		[5, "合法路線：跟在腳踏車後面慢慢騎", func(l: LevelBase) -> void:
-			await _drive(l, [Vector3(5.25, 0, 0), Vector3(8.3, 0, -20), Vector3(8.3, 0, -228), Vector3(5.25, 0, -250), Vector3(5.25, 0, -284)], 3.2, 150.0)
+			await _drive(l, [Vector3(5.25, 0, 0), Vector3(8.3, 0, -20), Vector3(8.3, 0, -188), Vector3(5.25, 0, -210), Vector3(5.25, 0, -284)], 3.2, 150.0)
 			_expect_win(l)],
 
 		[6, "照導航騎上國道", func(l: LevelBase) -> void:
@@ -128,22 +152,22 @@ func _run(case: Array) -> void:
 
 # --- Actions -----------------------------------------------------------------
 
-func _teleport_expect(l: LevelBase, pos: Vector3, yaw: float, expected: Array) -> void:
+func _teleport_expect(l: LevelBase, pos: Vector3, yaw: float, expected: Array, speed := 3.0) -> void:
 	l.scooter.global_transform = Transform3D(Basis(Vector3.UP, yaw), pos)
-	l.scooter.speed = 3.0
+	l.scooter.speed = speed
 	await _frames(10)
 	_expect_tickets(expected)
 
 
 ## Autopilot through waypoints at `cruise` m/s. Stops early if the level ends.
-func _drive(l: LevelBase, points: Array, cruise: float, timeout := 90.0) -> void:
+func _drive(l: LevelBase, points: Array, cruise: float, timeout := 90.0, reach := 3.0, coast := true) -> void:
 	var s := l.scooter
 	var i := 0
 	var t := 0.0
 	while i < points.size() and t < timeout and not l._ended:
 		var to: Vector3 = points[i] - s.global_position
 		to.y = 0.0
-		if to.length() < 3.0:
+		if to.length() < reach:
 			i += 1
 			continue
 		_steer_toward(s, to)
@@ -153,9 +177,16 @@ func _drive(l: LevelBase, points: Array, cruise: float, timeout := 90.0) -> void
 	# Let the scooter roll into goal zones placed just past the last point.
 	for a in ["accelerate", "steer_left", "steer_right"]:
 		Input.action_release(a)
-	await _frames(20)
+	if coast:
+		await _frames(20)
 	if t >= timeout:
 		_fail("autopilot timed out at waypoint %d" % i)
+
+
+## Drive `approach`, then creep precisely onto `spot` (a 待轉區) without coasting past it.
+func _into_box(l: LevelBase, approach: Array, spot: Vector3) -> void:
+	await _drive(l, approach, 6.0, 90.0, 3.0, false)
+	await _drive(l, [spot], 2.0, 30.0, 0.4, false)
 
 
 ## Brake to a stop, optionally pivot to `yaw`, and wait until `until` returns true.
