@@ -5,6 +5,7 @@ extends Node
 ## route with a simple autopilot. Exits 0 when every case passes, 1 otherwise.
 
 var _failures := 0
+var _checks := 0  # expectations evaluated in the current case
 var _level: LevelBase
 
 
@@ -40,18 +41,83 @@ func _cases() -> Array:
 			await _drive(l, [Vector3(8.75, 0, 16), Vector3(12.0, 0, 4.0), Vector3(54, 0, 3.5), Vector3(62, 0, -8),
 				Vector3(62, 0, -76), Vector3(54, 0, -82), Vector3(14, 0, -82), Vector3(8.75, 0, -90), Vector3(8.75, 0, -155)], 7.0)
 			_expect_win(l)],
+
+		[3, "直接左轉", func(l: LevelBase) -> void:
+			l.sig.setup(TrafficSignal.Phase.NS_GO, 30.0)
+			await _drive(l, [Vector3(9.8, 0, 16), Vector3(8.0, 0, 4), Vector3(0, 0, -3), Vector3(-40, 0, -3.5)], 7.0)
+			_expect_tickets(["two_stage_left"])],
+		[3, "閃停等區的車切進禁行機車道", func(l: LevelBase) -> void:
+			await _teleport_expect(l, Vector3(5.25, 0.1, 30), 0.0, ["lane_ban"])],
+		[3, "闖紅燈", func(l: LevelBase) -> void:
+			l.sig.setup(TrafficSignal.Phase.EW_GO, 30.0)
+			await _drive(l, [Vector3(9.8, 0, 16), Vector3(9.0, 0, -20)], 7.0)
+			_expect_tickets(["red_light"])],
+		[3, "合法路線：待轉區等橫向綠燈", func(l: LevelBase) -> void:
+			l.sig.setup(TrafficSignal.Phase.NS_GO, 30.0)
+			await _drive(l, [Vector3(9.9, 0, 40), Vector3(9.9, 0, 10), Vector3(12.5, 0, -3.0), Vector3(12.5, 0, -5.3)], 6.0)
+			await _stop_and_wait(l, PI / 2.0, func() -> bool: return l.sig.state("ew") == "green")
+			await _drive(l, [Vector3(0, 0, -5.3), Vector3(-95, 0, -3.5)], 7.0)
+			_expect_win(l)],
+
+		[4, "直接右轉", func(l: LevelBase) -> void:
+			l.sig.setup(TrafficSignal.Phase.NS_GO, 30.0)
+			await _drive(l, [Vector3(-5.25, 0, 16), Vector3(-5.0, 0, 6), Vector3(3, 0, 0), Vector3(40, 0, 0)], 7.0)
+			_expect_tickets(["two_stage_right"])],
+		[4, "騎進中間禁行機車道", func(l: LevelBase) -> void:
+			await _teleport_expect(l, Vector3(-1.75, 0.1, 30), 0.0, ["lane_ban"])],
+		[4, "單行道逆向", func(l: LevelBase) -> void:
+			await _teleport_expect(l, Vector3(-5.25, 0.1, 30), PI, ["wrong_way"])],
+		[4, "合法路線：兩段式右轉", func(l: LevelBase) -> void:
+			l.sig.setup(TrafficSignal.Phase.NS_GO, 30.0)
+			await _drive(l, [Vector3(-5.25, 0, 10), Vector3(-6.5, 0, -2.0), Vector3(-9.5, 0, -5.3)], 6.0)
+			await _stop_and_wait(l, -PI / 2.0, func() -> bool: return l.sig.state("ew") == "green")
+			await _drive(l, [Vector3(0, 0, -5.3), Vector3(95, 0, -3)], 7.0)
+			_expect_win(l)],
+		[3, "待轉區還沒綠燈就出發", func(l: LevelBase) -> void:
+			l.sig.setup(TrafficSignal.Phase.NS_GO, 30.0)
+			await _drive(l, [Vector3(9.9, 0, 40), Vector3(9.9, 0, 10), Vector3(12.5, 0, -3.0), Vector3(12.5, 0, -5.3)], 6.0)
+			await _stop_and_wait(l, PI / 2.0, func() -> bool: return true)
+			await _drive(l, [Vector3(0, 0, -5.3), Vector3(-40, 0, -3.5)], 7.0)
+			_expect_tickets(["red_light"])],
+
+		[5, "橋上超車閃進汽車道", func(l: LevelBase) -> void:
+			await _teleport_expect(l, Vector3(5.25, 0.1, -80), 0.0, ["lane_ban"])],
+		[5, "合法路線：跟在腳踏車後面慢慢騎", func(l: LevelBase) -> void:
+			await _drive(l, [Vector3(5.25, 0, 0), Vector3(8.3, 0, -20), Vector3(8.3, 0, -228), Vector3(5.25, 0, -250), Vector3(5.25, 0, -284)], 3.2, 150.0)
+			_expect_win(l)],
+
+		[6, "照導航騎上國道", func(l: LevelBase) -> void:
+			await _drive(l, [Vector3(6.5, 0, -45), Vector3(20, 0, -95)], 8.0)
+			_expect_tickets(["highway_scooter"])],
+		[6, "被逆向聯結車撞（罰單是對方的）", func(l: LevelBase) -> void:
+			await _drive(l, [Vector3(5.25, 0, -425)], 13.0)
+			_checks += 1
+			if not (l.truck_hit and Game.tickets.is_empty() and Game.total_fine == 0):
+				_fail("expected truck hit with no fine charged (hit=%s tickets=%s)" % [l.truck_hit, Game.tickets])],
+		[6, "合法路線：閃到路肩", func(l: LevelBase) -> void:
+			await _drive(l, [Vector3(8.3, 0, 20), Vector3(8.3, 0, -400), Vector3(5.25, 0, -426)], 13.0)
+			_expect_win(l)],
 	]
 
 
 func _run(case: Array) -> void:
 	Game.reset()
 	Game.level_index = case[0] - 1
-	_level = load(Game.LEVELS[case[0] - 1]).instantiate()
+	var inst: Node = load(Game.LEVELS[case[0] - 1]).instantiate()
+	if not inst is LevelBase:
+		print("CASE L%d %s" % [case[0], case[1]])
+		_fail("level %d failed to load (script error?)" % case[0])
+		return
+	_level = inst
 	add_child(_level)
 	await _frames(3)
 	print("CASE L%d %s" % [case[0], case[1]])
 	var before := _failures
+	_checks = 0
 	await case[2].call(_level)
+	# A script error aborts the case body silently; treat "no expectation reached" as failure.
+	if _checks == 0:
+		_fail("case aborted before any expectation (script error?)")
 	if _failures > before:
 		print("  (tickets=%s pos=%s)" % [Game.tickets, _level.scooter.global_position])
 	for a in ["accelerate", "brake", "steer_left", "steer_right"]:
@@ -144,11 +210,13 @@ func _hold_speed(s: Scooter, cruise: float) -> void:
 # --- Assertions --------------------------------------------------------------
 
 func _expect_tickets(expected: Array) -> void:
+	_checks += 1
 	if Game.tickets != expected:
 		_fail("expected tickets %s, got %s" % [expected, Game.tickets])
 
 
 func _expect_win(l: LevelBase) -> void:
+	_checks += 1
 	if not Game.tickets.is_empty():
 		_fail("legal route got tickets %s" % [Game.tickets])
 	elif not l._won:

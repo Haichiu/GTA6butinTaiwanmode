@@ -95,7 +95,7 @@ func add_head(pos: Vector3, axis: String, travel_dir: Vector3) -> void:
 func _refresh() -> void:
 	for head in _heads:
 		var s := state(head["axis"])
-		var on := {"red": 0, "yellow": 1, "green": 2}[s]
+		var on: int = {"red": 0, "yellow": 1, "green": 2}[s]
 		var colors := [Color(1, 0.15, 0.1), Color(1, 0.75, 0.1), Color(0.1, 1, 0.4)]
 		for i in 3:
 			var mat: StandardMaterial3D = head["lamps"][i].material_override
