@@ -17,6 +17,7 @@ func _ready() -> void:
 	streams["whistle"] = _make(0.7, _whistle)
 	streams["crash"] = _make(0.6, _crash)
 	streams["win"] = _make(0.8, _win)
+	streams["shutter"] = _make(0.25, _shutter)
 	var engine: AudioStreamWAV = _make(0.5, _engine)
 	engine.loop_mode = AudioStreamWAV.LOOP_FORWARD
 	engine.loop_end = int(0.5 * RATE)
@@ -104,6 +105,16 @@ func _crash(t: float, _length: float) -> float:
 	var noise := (randf() * 2.0 - 1.0) * exp(-t * 6.0)
 	var body := sin(TAU * 60.0 * t) * exp(-t * 10.0)
 	return 0.7 * noise + 0.5 * body
+
+
+# Camera shutter: two sharp clicks.
+func _shutter(t: float, _length: float) -> float:
+	var v := 0.0
+	for start in [0.0, 0.07]:
+		var u: float = t - start
+		if u >= 0.0:
+			v += (randf() * 2.0 - 1.0) * exp(-u * 160.0)
+	return 0.8 * v
 
 
 # Win: rising arpeggio C5 E5 G5 C6.

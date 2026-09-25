@@ -14,7 +14,7 @@ const BLOCK_START := -100.0
 const BLOCK_END := -124.0
 const TURN_R := 6.0  # the two 90° bends
 const LOOP_X := 25.0  # hairpin center x
-const Z_END := -260.0
+const Z_END := -540.0
 const GRAVEL := Color(0.55, 0.5, 0.42)
 
 var truck_hit := false
@@ -24,7 +24,7 @@ func _init() -> void:
 	title = "後龍死亡彎"
 	who = "大學生・週五 17:40"
 	objective = "週五沒課，沿著西濱騎回家過週末。媽媽說今晚滷了一鍋肉。\n導航：「沿著西濱一直直走就到了。」"
-	deadline = 70.0
+	deadline = 100.0
 	deadline_name = "滷肉上桌"
 	place = "家"
 	waiting_person = true
@@ -124,10 +124,16 @@ func _add_rules() -> void:
 			if b is Scooter:
 				(b as Scooter).grip = 1.0)
 		add_child(area)
-	goal(Vector2(LANE_X - LANE_W / 2.0, -235.0), Vector2(LANE_X + LANE_W / 2.0, -225.0))
-	gps = [Vector3(4.0, 0, -230.0)]
+	goal(Vector2(LANE_X - LANE_W / 2.0, -505.0), Vector2(LANE_X + LANE_W / 2.0, -495.0))
+	gps = [Vector3(4.0, 0, -500.0)]
+	# Once the jam clears: five cameras in 300 m. The 40 -> 50 -> 40 -> 50 pattern is copied from
+	# 新北土城擺接堡路 (自由時報 2026-09-19); five cameras on it is our exaggeration. Top speed is
+	# 50.4 km/h, so flat out every one of them gets you. Fines: the real 第40條 tiers.
+	var side := LANE_X + LANE_W / 2.0 + 1.2
+	for cam in [[-235.0, 40], [-295.0, 50], [-355.0, 40], [-415.0, 50], [-470.0, 40]]:
+		speed_camera(LANE_X, cam[0], cam[1], side)
 	on_enter(Vector2(LANE_X + 2.0, BLOCK_START - 8.0), Vector2(LANE_X + 8.0, BLOCK_START), func() -> void:
-		gps = [Vector3(LOOP_X + 4.0, 0, (BLOCK_START + BLOCK_END) / 2.0), Vector3(LANE_X, 0, BLOCK_END - 8.0), Vector3(LANE_X, 0, -230.0)]
+		gps = [Vector3(LOOP_X + 4.0, 0, (BLOCK_START + BLOCK_END) / 2.0), Vector3(LANE_X, 0, BLOCK_END - 8.0), Vector3(LANE_X, 0, -500.0)]
 		_gps_index = 0
 		toast("導航：……前面不是直直的嗎？"))
 	traffic([Vector3(1.75, 0, 80.0), Vector3(1.75, 0, Z_END)] as Array[Vector3], 20.0, 3.5)

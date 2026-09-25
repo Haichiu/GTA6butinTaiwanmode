@@ -45,6 +45,11 @@ func _ready() -> void:
 		box.add_child(_label("＝ 用最低時薪 %d 元工作 %.1f 小時。" % [MIN_WAGE_HOURLY, hours], 22, Color.WHITE))
 		box.add_child(_label("＝ 一台跨雙黃線逆向的聯結車被罰 %.1f 次。" % (Game.total_fine / truck), 22, Color.WHITE))
 
+	# To the people who ride these roads for real.
+	box.add_child(HSeparator.new())
+	box.add_child(_label("謹向每天騎過台 61 西濱後龍段機車道、新北土城擺接堡路的用路人，以及全台每天在待轉區裡等紅燈的機車騎士，致上最深的敬意。", 22, Color(1, 0.85, 0.3), true))
+	box.add_child(_label("你們每天都在玩這個遊戲，而且沒有 R 鍵。", 22, Color.WHITE))
+
 	# Sources: one line per article (all clauses of it merged), then the fine table and wage.
 	box.add_child(HSeparator.new())
 	box.add_child(_label("出處", 18, Color(0.75, 0.75, 0.75), true))
