@@ -57,19 +57,67 @@ static func surface(parent: Node3D, min_xz: Vector2, max_xz: Vector2, color := A
 
 
 ## Flat convex polygon on the ground (e.g. a lane taper). Points in xz, any winding.
-static func polygon(parent: Node3D, points: PackedVector2Array, color := ASPHALT, y := 0.025) -> void:
+## Triangles are emitted clockwise as seen from above (Godot's front face), so the surface is lit
+## exactly like the box-based asphalt around it instead of rendering as a dark back face.
+static func polygon(parent: Node3D, points: PackedVector2Array, color := ASPHALT, y := 0.03) -> void:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	st.set_normal(Vector3.UP)
 	for i in range(1, points.size() - 1):
-		for p in [points[0], points[i], points[i + 1]]:
-			st.add_vertex(Vector3(p.x, y, p.y))
+		var a := Vector3(points[0].x, y, points[0].y)
+		var b := Vector3(points[i].x, y, points[i].y)
+		var c := Vector3(points[i + 1].x, y, points[i + 1].y)
+		if (b - a).cross(c - a).y > 0.0:
+			var t := b
+			b = c
+			c = t
+		for v in [a, b, c]:
+			st.set_normal(Vector3.UP)
+			st.add_vertex(v)
 	var mi := MeshInstance3D.new()
 	mi.mesh = st.commit()
-	var mat := material(color).duplicate()
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED  # winding-agnostic
-	mi.material_override = mat
+	mi.material_override = material(color)
 	parent.add_child(mi)
+
+
+## Point on a circle in the ground plane (angle 0 = +x, PI/2 = +z).
+static func on_arc(center: Vector2, radius: float, angle: float) -> Vector2:
+	return center + Vector2(cos(angle), sin(angle)) * radius
+
+
+## Curved road surface: a ring sector between radii r_in..r_out from angle a0 to a1.
+static func arc_surface(parent: Node3D, center: Vector2, r_in: float, r_out: float, a0: float, a1: float, color := ASPHALT) -> void:
+	var steps := maxi(4, ceili(absf(a1 - a0) * r_out / 1.5))
+	for i in steps:
+		var t0 := lerpf(a0, a1, float(i) / steps)
+		var t1 := lerpf(a0, a1, float(i + 1) / steps)
+		polygon(parent, PackedVector2Array([on_arc(center, r_in, t0), on_arc(center, r_out, t0),
+			on_arc(center, r_out, t1), on_arc(center, r_in, t1)]), color)
+
+
+## Painted line along an arc (chords short enough to look curved).
+static func arc_line(parent: Node3D, center: Vector2, radius: float, a0: float, a1: float, color := WHITE, width := LINE_W) -> void:
+	var steps := maxi(4, ceili(absf(a1 - a0) * radius / 1.0))
+	for i in steps:
+		line(parent, on_arc(center, radius, lerpf(a0, a1, float(i) / steps)),
+			on_arc(center, radius, lerpf(a0, a1, float(i + 1) / steps)), color, width)
+
+
+## Guardrail along an arc: short solid segments you can crash into.
+static func arc_rail(parent: Node3D, center: Vector2, radius: float, a0: float, a1: float) -> void:
+	var steps := maxi(4, ceili(absf(a1 - a0) * radius / 1.2))
+	for i in steps:
+		var p0 := on_arc(center, radius, lerpf(a0, a1, float(i) / steps))
+		var p1 := on_arc(center, radius, lerpf(a0, a1, float(i + 1) / steps))
+		rail(parent, p0, p1)
+
+
+## Straight guardrail segment with collision.
+static func rail(parent: Node3D, from: Vector2, to: Vector2) -> void:
+	var d := to - from
+	var mid := (from + to) / 2.0
+	var r := box(parent, Vector3(0.25, 0.9, d.length() + 0.05), Vector3(mid.x, 0.45, mid.y), Color(0.75, 0.75, 0.78), true)
+	r.rotation.y = atan2(d.x, d.y)
+	r.add_to_group("guardrail")
 
 
 ## Painted line between two ground points. dash > 0 draws dashes of that length with equal gaps.

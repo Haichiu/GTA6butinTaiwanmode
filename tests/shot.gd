@@ -4,16 +4,13 @@ extends Node
 
 ## [level, file name, scooter position, yaw]; position null = spawn point.
 const SHOTS := [
-	[1, "l1_start", null, 0.0],
-	[1, "l1_uncle", Vector3(7.7, 0.1, -128.0), 0.0],
-	[1, "l1_goal", Vector3(8.75, 0.1, -275.0), 0.0],
-	[2, "l2_approach", Vector3(8.75, 0.1, 40.0), 0.0],
+	[1, "l1_truck", Vector3(9.8, 0.1, -240.0), 0.0],
 	[3, "l3_waitbox", Vector3(12.8, 0.1, -5.4), PI / 2.0],
-	[5, "l5_approach", Vector3(1.75, 0.1, 22.0), 0.0],
-	[5, "l5_sign", Vector3(1.75, 0.1, 12.0), 0.0],
-	[6, "l6_entry", Vector3(5.25, 0.1, 8.0), 0.0],
-	[6, "l6_exit", Vector3(8.3, 0.1, -170.0), 0.0],
-	[7, "l7_ticket", Vector3(5.25, 0.1, -20.0), 0.0, "highway_scooter"],
+	[6, "l6_exit", Vector3(8.3, 0.1, -198.0), 0.0],
+	[7, "l7_start", null, 0.0],
+	[7, "l7_hairpin", Vector3(11.25, 0.1, -102.0), 0.0],
+	[7, "l7_hairpin2", Vector3(22.75, 0.1, -95.0), PI],
+	[7, "l7_ticket", Vector3(4.0, 0.1, -110.0), 0.0, "expressway_scooter"],
 ]
 
 
@@ -41,6 +38,10 @@ func _ready() -> void:
 					break
 		if s[0] == 6 and s[1] == "l6_truck":
 			level.truck.global_position = Vector3(3.8, 0, -265.0)
+			level.truck.rotation.y = 0.0
+			level.truck.set_physics_process(false)
+		if s[1] == "l1_truck" and level.get("truck") != null:
+			level.truck.global_position = Vector3(6.3, 0, -262.0)
 			level.truck.rotation.y = 0.0
 			level.truck.set_physics_process(false)
 		await _frames(150 if s[1] == "l1_uncle" else 30)

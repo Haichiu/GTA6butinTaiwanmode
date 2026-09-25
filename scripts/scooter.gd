@@ -10,8 +10,13 @@ extends CharacterBody3D
 
 const PIVOT_RATE := 1.2  # rad/s when stopped
 
+## Emitted when the scooter runs into a guardrail; `impact` is the speed (m/s) just before.
+signal hit_rail(impact: float)
+
 var speed := 0.0
 var frozen := false
+## Steering authority multiplier: < 1 on gravel, where the front wheel washes out.
+var grip := 1.0
 
 var _visual: Node3D
 var _lean := 0.0
@@ -19,6 +24,7 @@ var _engine: AudioStreamPlayer
 
 
 func _ready() -> void:
+	add_to_group("scooter")
 	var shape := CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()
 	capsule.radius = 0.4
@@ -59,7 +65,7 @@ func _physics_process(delta: float) -> void:
 	# Full authority from ~15 km/h. At a standstill the rider can still shuffle the scooter
 	# around with their feet (slowly), which two-stage turns depend on.
 	var authority := clampf(speed / 4.0, 0.0, 1.0)
-	var turn := maxf(turn_rate * authority, PIVOT_RATE)
+	var turn := maxf(turn_rate * authority, PIVOT_RATE) * grip
 	rotation.y += steer * turn * delta
 
 	var forward := -global_transform.basis.z
@@ -72,10 +78,15 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 	# Hitting a wall or a car bleeds speed instead of sliding along at full pace.
+	var impact := speed
 	for i in get_slide_collision_count():
-		var n := get_slide_collision(i).get_normal()
+		var col := get_slide_collision(i)
+		var n := col.get_normal()
 		if absf(n.y) < 0.5 and forward.dot(n) < -0.3:
 			speed *= 0.5
+			var other := col.get_collider() as Node
+			if other != null and other.is_in_group("guardrail"):
+				hit_rail.emit(impact)
 
 	_lean = lerpf(_lean, steer * 0.3 * authority, 8.0 * delta)
 	_visual.rotation.z = _lean

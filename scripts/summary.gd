@@ -10,7 +10,7 @@ func _ready() -> void:
 	add_child(bg)
 
 	var box := VBoxContainer.new()
-	box.position = Vector2(140, 60)
+	box.position = Vector2(100, 30)
 	box.custom_minimum_size = Vector2(1000, 0)
 	box.add_theme_constant_override("separation", 8)
 	add_child(box)
@@ -31,7 +31,15 @@ func _ready() -> void:
 	if Game.total_fine > 0:
 		var times := float(Game.total_fine) / truck
 		box.add_child(_label("相當於一台跨雙黃線逆向的聯結車被罰 %.1f 次。" % times, 24, Color.WHITE))
-	box.add_child(_label("所有條文與金額都是真的，出處見 docs/laws.md。", 18, Color(0.7, 0.7, 0.7)))
+	# Sources: the article page for each law you were fined under, plus the official fine table.
+	box.add_child(_label("法條出處（全國法規資料庫）：", 18, Color(0.7, 0.7, 0.7)))
+	var urls := {}
+	for id in counts:
+		var l := Game.law(id)
+		urls[l["url"]] = urls.get(l["url"], []) + [Ticket._short(l["article"]).get_slice("（", 0)]
+	for url in urls:
+		box.add_child(_label("%s　%s" % ["、".join(PackedStringArray(urls[url])), url], 15, Color(0.7, 0.7, 0.7)))
+	box.add_child(_label("罰鍰金額：違反道路交通管理事件統一裁罰基準表　https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=D0080029", 15, Color(0.7, 0.7, 0.7)))
 	box.add_child(_label("按空白鍵重新開始", 22, Color(0.7, 0.9, 1.0)))
 
 

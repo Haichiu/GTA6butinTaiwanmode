@@ -58,3 +58,30 @@ func build() -> void:
 	traffic([Vector3(-5.25, 0, Z_END), Vector3(-5.25, 0, Z_START + 20.0)] as Array[Vector3], 12.0, 4.0)
 	traffic([Vector3(-1.75, 0, Z_END), Vector3(-1.75, 0, Z_START + 20.0)] as Array[Vector3], 13.0, 6.5, Callable(), 2.0)
 	gps = [Vector3(8.75, 0, -295.0)]
+
+var truck: NpcVehicle
+var truck_hit := false
+
+
+func after_spawn() -> void:
+	if not Game.ambient:
+		return
+	# Near the end, a southbound 聯結車 swings across the double yellow into your side.
+	# Gentle waypoints: the trailer swings with each heading change, so no sharp kinks, and it only
+	# drifts back after it has passed you.
+	var path: Array[Vector3] = [Vector3(-5.25, 0, -340.0), Vector3(-5.25, 0, -305.0), Vector3(-2.0, 0, -299.0),
+		Vector3(2.5, 0, -292.0), Vector3(6.3, 0, -284.0), Vector3(6.3, 0, -225.0), Vector3(2.5, 0, -217.0),
+		Vector3(-2.0, 0, -210.0), Vector3(-5.25, 0, -204.0), Vector3(-5.25, 0, 80.0)]
+	truck = NpcVehicle.make_custom(self, semi_truck(), AABB(Vector3(-1.3, 0, -11.0), Vector3(2.6, 4.0, 16.0)), path, 12.0)
+	truck.target = scooter
+	truck.yields = false  # it is supposed to come at you
+	# Timed so it's in your lane about when a rider at ~36 km/h gets there.
+	truck.trigger_distance = 128.0
+	truck.touched.connect(func() -> void:
+		if _ended:
+			return
+		truck_hit = true
+		Game.sfx.play("crash")
+		Game.report("oncoming_truck", "lane_ban",
+			"撞你的聯結車跨雙黃線逆向：只開這條的話罰 1,400。\n你剛剛如果騎進空的內側車道：600。", false))
+
