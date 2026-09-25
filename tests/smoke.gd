@@ -110,9 +110,18 @@ func _cases() -> Array:
 			await _teleport_expect(l, Vector3(-3.5, 0.1, -2.0), PI, ["uturn_no_left"])],
 		[5, "在雙黃線上迴轉", func(l: LevelBase) -> void:
 			await _teleport_expect(l, Vector3(-3.5, 0.1, -60.0), PI, ["uturn_double_yellow"])],
-		[5, "合法路線：直走到下個路口迴轉再右轉", func(l: LevelBase) -> void:
-			await _drive(l, [Vector3(1.75, 0, 16), Vector3(1.75, 0, -120), Vector3(1.0, 0, -131), Vector3(-2.5, 0, -133),
-				Vector3(-3.5, 0, -124), Vector3(-3.5, 0, -12), Vector3(-6, 0, -4), Vector3(-80, 0, -3.5)], 7.0)
+		[5, "過了路口還騎在畫左轉箭頭的內側車道", func(l: LevelBase) -> void:
+			await _teleport_expect(l, Vector3(1.75, 0.1, -40.0), 0.0, ["lane_ban"])],
+		[5, "第二個路口沒有標誌就直接左轉", func(l: LevelBase) -> void:
+			l.sig.setup(TrafficSignal.Phase.NS_GO, 30.0)
+			await _drive(l, [Vector3(5.25, 0, 20), Vector3(5.25, 0, -100), Vector3(5.0, 0, -125), Vector3(-4, 0, -133.5), Vector3(-40, 0, -133.5)], 7.0)
+			_expect_tickets(["two_stage_left"])],
+		[5, "合法路線：第二個路口兩段式左轉", func(l: LevelBase) -> void:
+			l.sig.setup(TrafficSignal.Phase.NS_GO, 40.0)
+			await _drive(l, [Vector3(1.75, 0, 16), Vector3(5.25, 0, -14), Vector3(5.25, 0, -110)], 8.0)
+			await _into_box(l, [Vector3(5.25, 0, -122), Vector3(8.0, 0, -128)], Vector3(8.8, 0, -135.4))
+			await _stop_and_wait(l, PI / 2.0, func() -> bool: return l.sig.state("ew") == "green")
+			await _drive(l, [Vector3(0, 0, -135.4), Vector3(-80, 0, -133.5)], 13.0)
 			_expect_win(l)],
 		[6, "橋上超車閃進汽車道", func(l: LevelBase) -> void:
 			await _teleport_expect(l, Vector3(5.25, 0.1, -80), 0.0, ["lane_ban"])],
@@ -147,8 +156,15 @@ func _cases() -> Array:
 					pts.append(Vector3(piece[2].x, 0, piece[2].y))
 			await _drive(l, pts.slice(0, 1), 9.0)
 			await _drive(l, pts.slice(1), 3.5, 90.0, 1.2)
-			await _drive(l, [Vector3(11.25, 0, -229.0)], 9.0)
+			await _drive(l, [Vector3(11.25, 0, -499.0)], 9.0, 120.0)  # 32 km/h: under every limit
 			_expect_win(l)],
+		[7, "全速衝過五支測速（40-50-40-50-40）", func(l: LevelBase) -> void:
+			Game.gm = true  # keep riding through every flash
+			_teleport(l, Vector3(11.25, 0.1, -200.0), 0.0)
+			l.scooter.speed = 14.0
+			await _drive(l, [Vector3(11.25, 0, -490.0)], 14.0, 60.0)
+			Game.gm = false
+			_expect_tickets(["speeding_scooter", "speeding_scooter", "speeding_scooter", "speeding_scooter", "speeding_scooter"])],
 		[3, "待轉時停在格子外面", func(l: LevelBase) -> void:
 			await _teleport_expect(l, Vector3(9.0, 0.1, -3.0), PI / 2.0, [], 0.0)
 			await _frames(80)
@@ -212,9 +228,9 @@ func _cases() -> Array:
 			await _drive(l, [Vector3(7.7, 0, -255), Vector3(9.8, 0, -262), Vector3(9.8, 0, -294)], 7.0)
 			_expect_win(l), "ambient"],
 		[5, "學校前小孩追球：撞上小孩", func(l: LevelBase) -> void:
-			l._reached_b = true
-			_teleport(l, Vector3(-30.0, 0.1, -3.5), PI / 2.0)  # close enough to set the ball rolling
-			var kid := await _wait_for_npc(l, func(n: NpcVehicle) -> bool: return n.speed == 3.0 and n.global_position.z > -7.0)
+			l.box.waited = true
+			_teleport(l, Vector3(-30.0, 0.1, -133.5), PI / 2.0)  # close enough to set the ball rolling
+			var kid := await _wait_for_npc(l, func(n: NpcVehicle) -> bool: return n.speed == 3.0 and n.global_position.z > -137.0)
 			_teleport(l, Vector3(kid.global_position.x + 3.0, 0.1, kid.global_position.z + 1.0), PI / 2.0)
 			l.scooter.speed = 4.0
 			Input.action_press("accelerate")

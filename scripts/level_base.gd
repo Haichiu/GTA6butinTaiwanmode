@@ -458,6 +458,47 @@ func model(path: String, pos: Vector3, rot_y := 0.0, size := 0.0, collide := fal
 	return holder
 
 
+## A speed camera at z = `z` on a northbound lane centred on `lane_x`, enforcing `limit` km/h.
+## Places the limit sign `sign_ahead` m before it and the legally required 取締 warning sign
+## 100 m before it (處罰條例 7-2: 100–300 m on ordinary roads). Fines per 第40條 tiers.
+func speed_camera(lane_x: float, z: float, limit: int, side_x: float, sign_ahead := 30.0) -> void:
+	sign_board("限速\n%d" % limit, Vector3(side_x, 0, z + sign_ahead), 0.0, Color(0.85, 0.12, 0.12), 2.0)
+	sign_board("測速\n取締", Vector3(side_x + 0.8, 0, z + 100.0), 0.0, Color(0.2, 0.2, 0.25), 1.6)
+	# The camera itself: a grey box on a pole, lens facing oncoming riders.
+	var cam := Node3D.new()
+	cam.position = Vector3(side_x, 0, z)
+	add_child(cam)
+	K.box(cam, Vector3(0.15, 3.2, 0.15), Vector3(0, 1.6, 0), Color(0.5, 0.5, 0.52))
+	K.box(cam, Vector3(0.6, 0.5, 0.8), Vector3(0, 3.3, 0), Color(0.35, 0.35, 0.38))
+	K.box(cam, Vector3(0.3, 0.3, 0.1), Vector3(0, 3.3, 0.42), Color(0.1, 0.1, 0.12))
+	on_enter(Vector2(lane_x - 3.0, z - 1.0), Vector2(lane_x + 3.0, z + 1.0), func() -> void:
+		_camera_flash()
+		var kmh := scooter.speed_kmh()
+		if kmh <= limit:
+			toast("（喀嚓。這支拍到你了，但你沒超速。它只是想拍。）", 2.5)
+		elif kmh - limit <= 20.0:
+			Game.report("speeding_scooter", "car_speeding",
+				"限速 %d，你騎 %.1f。超速 %.1f 公里，罰 1,200。\n（40→50→40→50 的速限，照抄新北土城擺接堡路。）" % [limit, kmh, kmh - limit])
+		else:
+			Game.report("speeding_scooter_40", "car_speeding",
+				"限速 %d，你騎 %.1f。超速 %.1f 公里，罰 1,400。" % [limit, kmh, kmh - limit]))
+
+
+func _camera_flash() -> void:
+	Game.sfx.play("shutter")
+	var layer := CanvasLayer.new()
+	layer.layer = 5
+	add_child(layer)
+	var flash := ColorRect.new()
+	flash.color = Color(1, 1, 1, 0.85)
+	flash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(flash)
+	var tw := create_tween()
+	tw.tween_property(flash, "color:a", 0.0, 0.35)
+	tw.tween_callback(layer.queue_free)
+
+
 ## Zebra crossing plus its rule: coming to a stop on it is a ticket (60-2-3).
 func crosswalk(min_xz: Vector2, max_xz: Vector2, along: String) -> void:
 	K.zebra(self, min_xz, max_xz, along)
