@@ -27,6 +27,9 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	if not Game.gm_available:
+		_gm_hint.text = ""
+		return
 	_gm_hint.text = "GM 模式：開啟（1–7 直接選關）" if Game.gm else "按 G 開啟 GM 模式（測試用：罰單不中斷、可選關）"
 
 
