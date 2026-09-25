@@ -39,6 +39,7 @@ var _can_continue := false
 var _building_i := 0
 var _elapsed := 0.0  # level time for the deadline, clamped per frame like the intro
 var _timer_label: Label
+var _gm_label: Label
 var _intro_time := 0.0  # seconds the intro has been shown (clamped per frame, see _process)
 var _pending_darters: Array[NpcVehicle] = []
 
@@ -81,6 +82,7 @@ func spawn_transform() -> Transform3D:
 func _process(delta: float) -> void:
 	_speed_label.text = "%d km/h" % roundi(scooter.speed_kmh())
 	_fine_label.text = "今日罰款 NT$ %s" % Ticket._money(Game.total_fine)
+	_gm_label.visible = Game.gm
 	if not _ended:
 		_elapsed += minf(delta, 0.1)
 	if deadline > 0.0:
@@ -284,12 +286,20 @@ func fail(text: String) -> void:
 	if _ended:
 		return
 	Game.sfx.play("crash")
+	if Game.gm:
+		toast("GM｜" + text, 3.0)
+		return
 	_end()
 	_show_message(text + "\n按空白鍵重來")
 
 
 func _on_violated(law_id: String, contrast_id: String, caption: String, charged: bool) -> void:
 	if _ended:
+		return
+	if Game.gm:
+		var l := Game.law(law_id)
+		Game.sfx.play("stamp")
+		toast("GM｜%s罰單：%s　NT$ %s" % ["" if charged else "對方的", l["title"], Ticket._money(l["fine"])], 3.0)
 		return
 	_end()
 	var ticket := Ticket.new()
@@ -538,6 +548,11 @@ func _setup_hud() -> void:
 	_timer_label = _hud_label(26)
 	_timer_label.position = Vector2(900, 58)
 	layer.add_child(_timer_label)
+	_gm_label = _hud_label(20)
+	_gm_label.text = "GM 模式｜罰單不中斷　1–7 選關　N 下一關　G 關閉"
+	_gm_label.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
+	_gm_label.position = Vector2(420, 686)
+	layer.add_child(_gm_label)
 	_message = _hud_label(40)
 	_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_message.position = Vector2(240, 280)

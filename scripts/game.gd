@@ -29,6 +29,8 @@ var total_fine := 0
 var total_points := 0
 var tickets: Array[String] = []  # law ids charged to the player, in order
 var level_index := 0
+## GM (testing) mode: tickets and crashes don't stop you; number keys jump between levels.
+var gm := false
 ## Hazards and ambient traffic. Rule tests switch this off so they stay deterministic.
 var ambient := true
 var sfx: Sfx
@@ -48,9 +50,27 @@ func _ready() -> void:
 			logical.keycode = keycode
 			InputMap.action_add_event(action, logical)
 	laws = _load_laws()
+	gm = OS.get_cmdline_user_args().has("--gm")
 	# Owned here rather than a second autoload, so project.godot needs no edits while the editor is open.
 	sfx = Sfx.new()
 	add_child(sfx)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	var key := event as InputEventKey
+	if key == null or not key.pressed or key.echo:
+		return
+	if key.physical_keycode == KEY_G:
+		gm = not gm
+		get_viewport().set_input_as_handled()
+	elif gm and key.physical_keycode >= KEY_1 and key.physical_keycode <= KEY_9:
+		var index := key.physical_keycode - KEY_1
+		if index < LEVELS.size():
+			start_level(index)
+			get_viewport().set_input_as_handled()
+	elif gm and key.physical_keycode == KEY_N:
+		next_level()
+		get_viewport().set_input_as_handled()
 
 
 func law(id: String) -> Dictionary:

@@ -9,6 +9,7 @@ var caption := ""
 var heading := Vector3.ZERO
 ## Optional extra gate, e.g. "only while the light is red". Returns bool.
 var condition := Callable()
+var _violating := false  # edge-trigger: ticket once per entry (matters in GM mode, where you keep riding)
 
 
 ## Convenience: create a zone covering [min_xz, max_xz] on the ground.
@@ -42,6 +43,7 @@ func _ready() -> void:
 
 # Polled rather than body_entered: conditions (lights, flags) can flip while the scooter is inside.
 func _physics_process(_delta: float) -> void:
+	var now := false
 	for body in get_overlapping_bodies():
 		var scooter := body as Scooter
 		if scooter == null or scooter.frozen:
@@ -52,4 +54,7 @@ func _physics_process(_delta: float) -> void:
 				continue
 		if condition.is_valid() and not condition.call():
 			continue
+		now = true
+	if now and not _violating:
 		Game.report(law_id, contrast_id, caption)
+	_violating = now
