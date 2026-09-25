@@ -20,7 +20,14 @@ var _rush_timer := 0.0
 
 func _init() -> void:
 	title = "兩段式左轉"
-	objective = "左轉進巷子去買早餐。這個路口機車要兩段式左轉。"
+	who = "孫子・06:40"
+	objective = "阿嬤去巷口早餐店買蛋餅，打電話叫你去載她回家。\n早餐店在左邊那條巷子。"
+	deadline = 45.0
+	deadline_name = "阿嬤等到不耐煩"
+	place = "阿嬤"
+	waiting_person = true
+	ending = "阿嬤跳上後座：「乖孫，蛋餅阿嬤請你，還燒燒！」"
+	late_ending = "阿嬤：「等到蛋餅都冷了啦……沒要緊，阿嬤牙齒不好剛好。」"
 
 
 func spawn_transform() -> Transform3D:

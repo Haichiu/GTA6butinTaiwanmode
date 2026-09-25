@@ -21,7 +21,14 @@ var _rush_timer := 0.0
 
 func _init() -> void:
 	title = "兩段式「右」轉"
-	objective = "右轉去銀行。單行道、你騎在左側車道……右轉也要兩段式。"
+	who = "小老闆・15:28"
+	objective = "貨款今天一定要存進去，銀行三點半關門。銀行在右邊那條路上。"
+	deadline = 45.0
+	deadline_name = "銀行關門"
+	place = "銀行"
+	waiting_person = false
+	ending = "鐵捲門拉到一半，你用滑壘的姿勢滑了進去。"
+	late_ending = "鐵捲門在你面前「唰——」一聲關上。"
 
 
 func spawn_transform() -> Transform3D:

@@ -56,6 +56,22 @@ static func surface(parent: Node3D, min_xz: Vector2, max_xz: Vector2, color := A
 	box(parent, Vector3(size.x, 0.02, size.y), Vector3(center.x, y, center.y), color)
 
 
+## Flat convex polygon on the ground (e.g. a lane taper). Points in xz, any winding.
+static func polygon(parent: Node3D, points: PackedVector2Array, color := ASPHALT, y := 0.025) -> void:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_normal(Vector3.UP)
+	for i in range(1, points.size() - 1):
+		for p in [points[0], points[i], points[i + 1]]:
+			st.add_vertex(Vector3(p.x, y, p.y))
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	var mat := material(color).duplicate()
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED  # winding-agnostic
+	mi.material_override = mat
+	parent.add_child(mi)
+
+
 ## Painted line between two ground points. dash > 0 draws dashes of that length with equal gaps.
 static func line(parent: Node3D, from: Vector2, to: Vector2, color := WHITE, width := LINE_W, dash := 0.0) -> void:
 	var dir := to - from

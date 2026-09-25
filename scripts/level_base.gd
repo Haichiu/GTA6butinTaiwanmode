@@ -12,7 +12,15 @@ const CURB := 0.3
 const BUILDINGS := ["building-a", "building-b", "building-c", "building-d", "building-e", "building-f", "building-g", "building-h"]
 
 var title := ""
-var objective := ""
+var objective := ""  # the situation, in the character's words — never the rule
+var who := ""  # whose day this level is
+## Seconds until the deadline (0 = none). Being late never fails the level; it changes the ending line.
+var deadline := 0.0
+var deadline_name := ""  # e.g. "打卡"
+var place := ""  # label floating over the goal: a person, a door, a venue...
+var waiting_person := true  # draw someone standing at the goal
+var ending := ""  # the little ending when you make it in time
+var late_ending := ""  # ...and when you don't
 ## Waypoints the GPS arrow points through, in order. It always suggests the "obvious" route.
 var gps: Array[Vector3] = []
 
@@ -28,6 +36,8 @@ var _ended := false
 var _won := false
 var _can_continue := false
 var _building_i := 0
+var _elapsed := 0.0  # level time for the deadline, clamped per frame like the intro
+var _timer_label: Label
 var _intro_time := 0.0  # seconds the intro has been shown (clamped per frame, see _process)
 
 
@@ -66,6 +76,12 @@ func spawn_transform() -> Transform3D:
 func _process(delta: float) -> void:
 	_speed_label.text = "%d km/h" % roundi(scooter.speed_kmh())
 	_fine_label.text = "今日罰款 NT$ %s" % Ticket._money(Game.total_fine)
+	if not _ended:
+		_elapsed += minf(delta, 0.1)
+	if deadline > 0.0:
+		var left := deadline - _elapsed
+		_timer_label.text = "距離%s還有 %d 秒" % [deadline_name, ceili(left)] if left > 0.0 else "%s時間已經過了" % deadline_name
+		_timer_label.add_theme_color_override("font_color", Color(1, 0.35, 0.3) if left < 10.0 else Color.WHITE)
 	_update_arrow()
 	# Fade the intro after 6 s of *play*. Clamping delta matters on the web, where the first
 	# frame after a slow level load can report several seconds at once.
@@ -99,24 +115,56 @@ func goal(min_xz: Vector2, max_xz: Vector2) -> void:
 		if body == scooter and not _ended:
 			win())
 	add_child(area)
-	var marker := MeshInstance3D.new()
-	var mesh := BoxMesh.new()
-	mesh.size = Vector3(size.x, 0.05, size.y)
+	# Small ring on the ground plus the person waiting there.
+	var ring := MeshInstance3D.new()
+	var disc := CylinderMesh.new()
+	disc.top_radius = 1.6
+	disc.bottom_radius = 1.6
+	disc.height = 0.03
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.2, 0.9, 0.4, 0.4)
+	mat.albedo_color = Color(1.0, 0.85, 0.2, 0.55)
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mesh.material = mat
-	marker.mesh = mesh
-	marker.position = Vector3(center.x, 0.06, center.y)
-	add_child(marker)
+	disc.material = mat
+	ring.mesh = disc
+	ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	ring.position = Vector3(center.x, 0.06, center.y)
+	add_child(ring)
+	var side := 1.0 if center.x >= 0.0 else -1.0
+	var anchor := Vector3(center.x + side * 1.4, 0, center.y)
+	if waiting_person:
+		var person := _person(Color(0.85, 0.3, 0.35))
+		person.position = anchor
+		add_child(person)
+	var tag := Label3D.new()
+	tag.text = place
+	tag.font = K.font()
+	tag.font_size = 96
+	tag.pixel_size = 0.006
+	tag.outline_size = 16
+	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	tag.position = anchor + Vector3.UP * 2.4
+	add_child(tag)
+
+
+## A simple standing figure (someone waiting, a pedestrian...). Faces +Z.
+func _person(shirt: Color, height := 1.0) -> Node3D:
+	var root := Node3D.new()
+	K.box(root, Vector3(0.18, 0.8, 0.18), Vector3(-0.12, 0.4, 0) * Vector3(1, height, 1), Color(0.2, 0.2, 0.3))
+	K.box(root, Vector3(0.18, 0.8, 0.18), Vector3(0.12, 0.4, 0) * Vector3(1, height, 1), Color(0.2, 0.2, 0.3))
+	K.box(root, Vector3(0.5, 0.65, 0.3), Vector3(0, 1.1 * height, 0), shirt)
+	K.box(root, Vector3(0.3, 0.3, 0.3), Vector3(0, 1.6 * height, 0), Color(0.95, 0.8, 0.65))
+	root.scale = Vector3.ONE * height
+	return root
 
 
 func win() -> void:
 	Game.sfx.play("win")
 	_won = true
+	var late := deadline > 0.0 and _elapsed > deadline
 	_end()
-	_show_message("抵達目的地！\n按空白鍵前往下一關")
+	var line := late_ending if late and late_ending != "" else ending
+	_show_message("%s\n按空白鍵前往下一關" % (line if line != "" else "到了！"))
 
 
 ## Non-ticket failure (e.g. hit by a truck): message then restart.
@@ -375,6 +423,9 @@ func _setup_hud() -> void:
 	_fine_label = _hud_label(26)
 	_fine_label.position = Vector2(900, 20)
 	layer.add_child(_fine_label)
+	_timer_label = _hud_label(26)
+	_timer_label.position = Vector2(900, 58)
+	layer.add_child(_timer_label)
 	_message = _hud_label(40)
 	_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_message.position = Vector2(240, 280)
@@ -385,7 +436,7 @@ func _setup_hud() -> void:
 	_intro.position = Vector2(24, 20)
 	_intro.size = Vector2(840, 120)
 	_intro.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY  # CJK text: break anywhere, not at spaces
-	_intro.text = "第 %d 關：%s\n%s" % [Game.level_index + 1, title, objective]
+	_intro.text = "第 %d 關｜%s\n%s" % [Game.level_index + 1, who if who != "" else title, objective]
 	layer.add_child(_intro)
 
 

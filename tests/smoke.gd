@@ -97,28 +97,39 @@ func _cases() -> Array:
 			await _drive(l, [Vector3(0, 0, -5.4), Vector3(-40, 0, -3.5)], 7.0)
 			_expect_tickets(["red_light"])],
 
-		[5, "橋上超車閃進汽車道", func(l: LevelBase) -> void:
+		[5, "照地上的箭頭左轉", func(l: LevelBase) -> void:
+			await _drive(l, [Vector3(1.75, 0, 16), Vector3(1.0, 0, 3), Vector3(-6, 0, -3.5), Vector3(-40, 0, -3.5)], 7.0)
+			_expect_tickets(["no_left_turn"])],
+		[5, "在路口直接迴轉", func(l: LevelBase) -> void:
+			await _teleport_expect(l, Vector3(-3.5, 0.1, -2.0), PI, ["uturn_no_left"])],
+		[5, "在雙黃線上迴轉", func(l: LevelBase) -> void:
+			await _teleport_expect(l, Vector3(-3.5, 0.1, -60.0), PI, ["uturn_double_yellow"])],
+		[5, "合法路線：直走到下個路口迴轉再右轉", func(l: LevelBase) -> void:
+			await _drive(l, [Vector3(1.75, 0, 16), Vector3(1.75, 0, -120), Vector3(1.0, 0, -131), Vector3(-2.5, 0, -133),
+				Vector3(-3.5, 0, -124), Vector3(-3.5, 0, -12), Vector3(-6, 0, -4), Vector3(-80, 0, -3.5)], 7.0)
+			_expect_win(l)],
+		[6, "橋上超車閃進汽車道", func(l: LevelBase) -> void:
 			await _teleport_expect(l, Vector3(5.25, 0.1, -80), 0.0, ["lane_ban"])],
-		[5, "撞到腳踏車只會被擋住，不會失敗", func(l: LevelBase) -> void:
+		[6, "撞到腳踏車只會被擋住，不會失敗", func(l: LevelBase) -> void:
 			await _drive(l, [Vector3(5.25, 0, 0), Vector3(8.3, 0, -20), Vector3(8.3, 0, -120)], 10.0, 30.0)
 			_checks += 1
 			if l._ended:
 				_fail("bumping a cyclist should not end the level (tickets=%s)" % [Game.tickets])
 			await _drive(l, [Vector3(8.3, 0, -188), Vector3(5.25, 0, -210), Vector3(5.25, 0, -284)], 4.0, 150.0)
 			_expect_win(l)],
-		[5, "合法路線：跟在腳踏車後面慢慢騎", func(l: LevelBase) -> void:
+		[6, "合法路線：跟在腳踏車後面慢慢騎", func(l: LevelBase) -> void:
 			await _drive(l, [Vector3(5.25, 0, 0), Vector3(8.3, 0, -20), Vector3(8.3, 0, -188), Vector3(5.25, 0, -210), Vector3(5.25, 0, -284)], 3.2, 150.0)
 			_expect_win(l)],
 
-		[6, "照導航騎上國道", func(l: LevelBase) -> void:
+		[7, "照導航騎上國道", func(l: LevelBase) -> void:
 			await _drive(l, [Vector3(6.5, 0, -45), Vector3(20, 0, -95)], 8.0)
 			_expect_tickets(["highway_scooter"])],
-		[6, "被逆向聯結車撞（罰單是對方的）", func(l: LevelBase) -> void:
+		[7, "被逆向聯結車撞（罰單是對方的）", func(l: LevelBase) -> void:
 			await _drive(l, [Vector3(5.25, 0, -425)], 13.0)
 			_checks += 1
 			if not (l.truck_hit and Game.tickets.is_empty() and Game.total_fine == 0):
 				_fail("expected truck hit with no fine charged (hit=%s tickets=%s)" % [l.truck_hit, Game.tickets])],
-		[6, "合法路線：閃到路肩", func(l: LevelBase) -> void:
+		[7, "合法路線：閃到路肩", func(l: LevelBase) -> void:
 			await _drive(l, [Vector3(8.3, 0, 20), Vector3(8.3, 0, -400), Vector3(5.25, 0, -426)], 13.0)
 			_expect_win(l)],
 	]

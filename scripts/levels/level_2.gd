@@ -15,7 +15,14 @@ const SMALL := 4.0  # half width of B and C
 
 func _init() -> void:
 	title = "我的車道呢？"
-	objective = "直走到前面 150 公尺的郵局。注意路口的車道標線。"
+	who = "歌迷・18:57"
+	objective = "搶了三個月的演唱會門票，七點開場。場館就在前面路口正對面。"
+	deadline = 50.0
+	deadline_name = "開場"
+	place = "演唱會入口"
+	waiting_person = false
+	ending = "衝進場館的瞬間，第一首歌前奏剛好下。\n全場尖叫，你也是。"
+	late_ending = "你在場館外面，隔著牆聽完了安可。"
 
 
 func spawn_transform() -> Transform3D:
@@ -56,8 +63,8 @@ func build() -> void:
 	lines_ns([B_X], ["yellow2"], -A_HALF, C_Z + SMALL)
 	lines_ew([C_Z], ["yellow2"], HALF, B_X - SMALL)
 
-	sign_board("右轉專用\n機車不能直行", Vector3(HALF + 1.2, 0, 30.0), 0.0, Color(0.15, 0.35, 0.75), 2.2)
-	sign_board("郵局", Vector3(HALF + 1.5, 0, -155.0), -PI / 2.0, Color(0.1, 0.55, 0.25), 2.5)
+	sign_board("右轉專用", Vector3(HALF + 1.2, 0, 30.0), 0.0, Color(0.15, 0.35, 0.75), 2.2)
+	sign_board("巨蛋演唱會\n今晚 19:00", Vector3(HALF + 1.5, 0, -155.0), -PI / 2.0, Color(0.55, 0.15, 0.6), 2.5)
 	# The block inside the loop hides the detour from view.
 	for bx in [22.0, 38.0]:
 		for bz in [-25.0, -55.0]:
