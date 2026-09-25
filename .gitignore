@@ -1,0 +1,9 @@
+# Godot cache and build output
+.godot/
+/build/
+*.tmp
+
+# Raw asset downloads (extracted copies live in assets/)
+/_downloads/
+
+.DS_Store
