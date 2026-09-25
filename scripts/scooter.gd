@@ -10,7 +10,8 @@ extends CharacterBody3D
 
 const PIVOT_RATE := 1.2  # rad/s when stopped
 
-## Emitted when the scooter runs into a guardrail; `impact` is the speed (m/s) just before.
+## Emitted when the scooter hits a post/guardrail; `impact` is the speed component (m/s) driven
+## straight into it, i.e. how hard the front end actually struck, not how fast you were going.
 signal hit_rail(impact: float)
 
 var speed := 0.0
@@ -79,14 +80,18 @@ func _physics_process(delta: float) -> void:
 
 	# Hitting a wall or a car bleeds speed instead of sliding along at full pace.
 	var impact := speed
+	var rail_impact := -1.0
 	for i in get_slide_collision_count():
 		var col := get_slide_collision(i)
 		var n := col.get_normal()
 		if absf(n.y) < 0.5 and forward.dot(n) < -0.3:
 			speed *= 0.5
-			var other := col.get_collider() as Node
-			if other != null and other.is_in_group("guardrail"):
-				hit_rail.emit(impact)
+		var other := col.get_collider() as Node
+		if absf(n.y) < 0.5 and other != null and other.is_in_group("guardrail"):
+			# Normal component of the velocity: head-on at 30 km/h is a big hit, grazing is not.
+			rail_impact = maxf(rail_impact, impact * maxf(0.0, -forward.dot(n)))
+	if rail_impact >= 0.0:
+		hit_rail.emit(rail_impact)
 
 	_lean = lerpf(_lean, steer * 0.3 * authority, 8.0 * delta)
 	_visual.rotation.z = _lean

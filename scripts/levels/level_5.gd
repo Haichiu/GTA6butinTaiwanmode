@@ -81,6 +81,10 @@ func build() -> void:
 	sig.add_head(Vector3(-HALF - 2.0, 0, B_Z - B_HALF - 1.5), "ew", Vector3.LEFT)
 	sign_board("國小", Vector3(-80.0, 0, B_Z - B_HALF - 1.5), 0.0, Color(0.1, 0.5, 0.3), 2.5)
 	for sx in [-1, 1]:
+		# Sidewalks the whole way, dressed like any Taiwanese street.
+		for seg in [[A_HALF + WALK, 95.0], [B_Z + B_HALF + WALK, -A_HALF - WALK], [-220.0, B_Z - B_HALF - WALK]]:
+			K.surface(self, Vector2(minf(sx * HALF, sx * (HALF + WALK)), seg[0]), Vector2(maxf(sx * HALF, sx * (HALF + WALK)), seg[1]), K.SIDEWALK, 0.03)
+			StreetDressing.ns_side(self, sx * HALF, seg[1], seg[0], sx, WALK)
 		buildings_ns(sx * (HALF + WALK + 8.0), A_HALF + WALK, 95.0, -sx)
 		buildings_ns(sx * (HALF + WALK + 8.0), B_Z + B_HALF + 4.0, -A_HALF - WALK, -sx)
 		buildings_ns(sx * (HALF + WALK + 8.0), -220.0, B_Z - B_HALF - 4.0, -sx)
@@ -123,6 +127,13 @@ func _add_rules() -> void:
 		Vector3(5.25, 0, B_Z + STOP), ns_go)
 	traffic([Vector3(-5.25, 0, -220.0), Vector3(-5.25, 0, 95.0)] as Array[Vector3], 11.0, 6.0, Callable(), 3.0,
 		Vector3(-5.25, 0, B_Z - STOP), ns_go)
+	traffic([Vector3(5.25, 0, 95.0), Vector3(5.25, 0, -220.0)] as Array[Vector3], 9.5, 3.0, Callable(), 1.5,
+		Vector3(5.25, 0, B_Z + STOP), ns_go, "scooter")
+	traffic([Vector3(-5.25, 0, -220.0), Vector3(-5.25, 0, 95.0)] as Array[Vector3], 9.5, 3.0, Callable(), 0.5,
+		Vector3(-5.25, 0, B_Z - STOP), ns_go, "scooter")
+	for sx in [-1, 1]:
+		pedestrians_ns(sx * (HALF + 2.2), 95.0, A_HALF + WALK + 1.0, 4)
+		pedestrians_ns(sx * (HALF + 2.2), -A_HALF - WALK - 1.0, B_Z + B_HALF + WALK + 1.0, 4)
 	# Past junction A the GPS just points at the school.
 	on_enter(Vector2(-HALF, -A_HALF - 12.0), Vector2(HALF, -A_HALF - 6.0), func() -> void:
 		gps = [Vector3(-2.0, 0, B_Z - 2.0), Vector3(-80.0, 0, B_Z - 3.5)]

@@ -83,6 +83,8 @@ func build() -> void:
 	sig.add_head(Vector3(HALF + 2.5, 0, EW + 1.5), "ew", Vector3.RIGHT)
 
 	for sx in [-1, 1]:
+		StreetDressing.ns_side(self, sx * HALF, 95.0, EW + WALK, sx, WALK)
+		StreetDressing.ns_side(self, sx * HALF, -EW - WALK, -120.0, sx, WALK)
 		buildings_ns(sx * (HALF + WALK + 8.0), EW + WALK, 95.0, -sx)
 		buildings_ns(sx * (HALF + WALK + 8.0), -120.0, -EW - WALK, -sx)
 
@@ -114,6 +116,13 @@ func _add_rules() -> void:
 	traffic([Vector3(-5.25, 0, -60.0), Vector3(-5.25, 0, 95.0)] as Array[Vector3], 11.0, 3.5, Callable(), 0.0, Vector3(-5.25, 0, -STOP), ns_go)
 	traffic([Vector3(5.25, 0, 60.0), Vector3(5.25, 0, -120.0)] as Array[Vector3], 11.0, 5.0, Callable(), 1.5, Vector3(5.25, 0, STOP), ns_go)
 	traffic([Vector3(-40.0, 0, 3.5), Vector3(150.0, 0, 3.5)] as Array[Vector3], 11.0, 3.0, Callable(), 0.0, Vector3(-HALF - 7.3, 0, 3.5), ew_go)
+	# Scooters squeeze past the cars in the 停等區 like you do, and stop on red.
+	traffic([Vector3(9.9, 0, 95.0), Vector3(9.9, 0, STOP + 1.0), Vector3(8.75, 0, -10.0), Vector3(8.75, 0, -120.0)] as Array[Vector3], 9.0, 2.5,
+		Callable(), 0.5, Vector3(9.9, 0, STOP), ns_go, "scooter")
+	traffic([Vector3(-8.75, 0, -120.0), Vector3(-8.75, 0, 95.0)] as Array[Vector3], 10.0, 2.5, Callable(), 1.5, Vector3(-8.75, 0, -STOP), ns_go, "scooter")
+	for sx in [-1, 1]:
+		pedestrians_ns(sx * (HALF + 2.2), 95.0, EW + WALK + 1.0, 4)
+		pedestrians_ns(sx * (HALF + 2.2), -EW - WALK - 1.0, -120.0, 4)
 
 
 func after_spawn() -> void:

@@ -36,6 +36,8 @@ func build() -> void:
 		for lane_x in [1.75, 5.25]:
 			K.ground_text(self, "禁\n行\n機\n車", Vector2(lane_x, z), K.YELLOW)
 		z -= 50.0
+	StreetDressing.ns_side(self, HALF, Z_START, Z_END, 1, WALK, [[-157.0, -147.0]])
+	StreetDressing.ns_side(self, -HALF, Z_START, Z_END, -1, WALK)
 	buildings_ns(HALF + WALK + 8.0, Z_END, Z_START, -1)
 	buildings_ns(-HALF - WALK - 8.0, Z_END, Z_START, 1)
 
@@ -57,6 +59,10 @@ func build() -> void:
 	darter("uncle", Vector3(12.5, 0, -152.0), Vector3(-12.0, 0, -152.0), 42.0)
 	traffic([Vector3(-5.25, 0, Z_END), Vector3(-5.25, 0, Z_START + 20.0)] as Array[Vector3], 12.0, 4.0)
 	traffic([Vector3(-1.75, 0, Z_END), Vector3(-1.75, 0, Z_START + 20.0)] as Array[Vector3], 13.0, 6.5, Callable(), 2.0)
+	# Oncoming scooters in their outer lane; pedestrians on both sidewalks.
+	traffic([Vector3(-8.75, 0, Z_END), Vector3(-8.75, 0, Z_START + 20.0)] as Array[Vector3], 11.0, 2.2, Callable(), 0.5, Vector3.INF, Callable(), "scooter")
+	pedestrians_ns(HALF + 2.2, Z_START, Z_END, 7)
+	pedestrians_ns(-HALF - 2.2, Z_START, Z_END, 7)
 	gps = [Vector3(8.75, 0, -295.0)]
 
 var truck: NpcVehicle

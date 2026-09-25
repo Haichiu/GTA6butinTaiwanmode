@@ -70,6 +70,8 @@ func build() -> void:
 		for bz in [-25.0, -55.0]:
 			model(CITY + BUILDINGS[_building_i % BUILDINGS.size()] + ".glb", Vector3(bx, 0, bz), PI / 2.0, 13.0, true)
 			_building_i += 1
+	StreetDressing.ns_side(self, HALF, 80.0, 14.0, 1, WALK)
+	StreetDressing.ns_side(self, -HALF, 80.0, -200.0, -1, WALK, [[-12.0, 12.0]])
 	buildings_ns(-HALF - WALK - 8.0, -200.0, 80.0, 1)
 	buildings_ns(HALF + WALK + 8.0, 14.0, 80.0, -1)
 	buildings_ns(HALF + WALK + 8.0, -200.0, C_Z - SMALL - 2.0, -1)
@@ -99,6 +101,12 @@ func _add_rules() -> void:
 	traffic([Vector3(1.75, 0, 90.0), Vector3(1.75, 0, -200.0)] as Array[Vector3], 12.0, 6.0, Callable(), 2.5)
 	traffic([Vector3(-5.25, 0, -200.0), Vector3(-5.25, 0, 90.0)] as Array[Vector3], 12.0, 5.0)
 	darter("dog", Vector3(36.0, 0, 11.0), Vector3(36.0, 0, -11.0), 22.0)
+	# Other scooters do what the lane markings force: turn right and go round.
+	traffic([Vector3(8.75, 0, 90.0), Vector3(8.75, 0, 16.0), Vector3(12.0, 0, 4.0), Vector3(54.0, 0, 3.5),
+		Vector3(62.0, 0, -8.0), Vector3(62.0, 0, -76.0)] as Array[Vector3], 9.0, 3.0, Callable(), 1.0, Vector3.INF, Callable(), "scooter")
+	traffic([Vector3(-8.75, 0, -200.0), Vector3(-8.75, 0, 90.0)] as Array[Vector3], 11.0, 2.5, Callable(), 0.0, Vector3.INF, Callable(), "scooter")
+	pedestrians_ns(-HALF - 2.2, 80.0, -200.0, 8)
+	pedestrians_ns(HALF + 2.2, 80.0, 14.0, 4)
 	# Once you give up and turn right, the GPS "helpfully" reroutes.
 	on_enter(Vector2(HALF + 4.0, 0.0), Vector2(HALF + 10.0, A_HALF), func() -> void:
 		gps = [Vector3(B_X + 2.0, 0, -3.0), Vector3(B_X + 2.0, 0, C_Z - 2.0), Vector3(HALF + 2.0, 0, C_Z - 2.0), Vector3(8.75, 0, -155.0)]

@@ -212,7 +212,7 @@ func _hazard_hit(law_id: String, caption: String) -> void:
 ## (e.g. its light is green) and removes it at the end. Cars keep their distance from you;
 ## running into one is an accident report (see _car_contact).
 func traffic(path: Array[Vector3], mps: float, interval: float, active := Callable(), first_delay := 0.0,
-		stop_at := Vector3.INF, go := Callable()) -> void:
+		stop_at := Vector3.INF, go := Callable(), kind := "car") -> void:
 	if not Game.ambient:
 		return
 	var timer := Timer.new()
@@ -221,13 +221,23 @@ func traffic(path: Array[Vector3], mps: float, interval: float, active := Callab
 	var spawn := func() -> void:
 		if _ended or (active.is_valid() and not active.call()):
 			return
-		var car := NpcVehicle.make(self, CARS + TRAFFIC_MODELS[randi() % TRAFFIC_MODELS.size()] + ".glb", 4.4, path, mps)
+		var car: NpcVehicle
+		match kind:
+			"semi":
+				car = NpcVehicle.make_custom(self, semi_truck(), AABB(Vector3(-1.3, 0, -11.0), Vector3(2.6, 4.0, 16.0)), path, mps)
+			"scooter":
+				# Slight speed spread; the following logic sorts out the queue.
+				car = NpcVehicle.make_custom(self, npc_scooter(), AABB(Vector3(-0.35, 0, -0.9), Vector3(0.7, 1.8, 1.8)),
+					path, mps * randf_range(0.85, 1.1))
+			_:
+				car = NpcVehicle.make(self, CARS + TRAFFIC_MODELS[randi() % TRAFFIC_MODELS.size()] + ".glb", 4.4, path, mps)
 		car.target = scooter
 		car.free_at_end = true
 		car.stop_point = stop_at
 		car.can_go = go
 		car.add_to_group("traffic")
 		car.touched.connect(func() -> void: _car_contact(car))
+		car.set_meta("kind", kind)
 	# Timers belong to the level, so a restart can't fire them into a freed scene. A separate
 	# one-shot handles the first car; reusing one timer for both double-spawned the first car.
 	timer.timeout.connect(spawn)
@@ -248,12 +258,51 @@ func _car_contact(car: Node3D) -> void:
 	var forward := -scooter.global_transform.basis.z
 	var to_car := car.global_position - scooter.global_position
 	to_car.y = 0.0
+	# A slow nudge into another scooter in a queue isn't a crash: you're just blocked.
+	var npc := car as NpcVehicle
+	if npc != null and npc.get_meta("kind", "car") == "scooter":
+		# NPC visuals face +Z, so their direction of travel is basis.z.
+		var closing := scooter.speed - npc.speed * maxf(0.0, forward.dot(npc.global_transform.basis.z))
+		if closing < 3.0:
+			toast("你碰到前面的機車，對方回頭瞪了你一眼。", 2.0)
+			return
 	Game.sfx.play("crash")
 	if to_car.length() > 0.01 and forward.dot(to_car.normalized()) > 0.5 and scooter.speed > 1.0:
 		Game.report("rear_end", "car_speeding",
 			"一般道路追撞前車：處罰條例找不到罰鍰，0 元。\n但修車、保險、跟對方喬，全部自己來。同樣的事在國道罰 3,000 起。")
 	else:
 		fail("跟汽車擦撞了。")
+
+
+## Someone else on a scooter (most of Taiwan's traffic). Faces +Z.
+func npc_scooter() -> Node3D:
+	var root := Node3D.new()
+	var body_colors := [Color(0.9, 0.9, 0.92), Color(0.15, 0.15, 0.18), Color(0.8, 0.2, 0.2), Color(0.3, 0.5, 0.85), Color(0.95, 0.85, 0.3)]
+	var shirts := [Color(0.3, 0.3, 0.35), Color(0.85, 0.85, 0.8), Color(0.2, 0.4, 0.7), Color(0.7, 0.3, 0.3), Color(0.35, 0.55, 0.35)]
+	var helmets := [Color(0.95, 0.95, 0.95), Color(0.1, 0.1, 0.1), Color(0.95, 0.8, 0.2), Color(0.9, 0.3, 0.5), Color(0.3, 0.6, 0.9)]
+	K.box(root, Vector3(0.45, 0.5, 1.6), Vector3(0, 0.45, 0), body_colors[randi() % body_colors.size()])
+	K.box(root, Vector3(0.45, 0.6, 0.3), Vector3(0, 1.1, -0.1), shirts[randi() % shirts.size()])
+	K.box(root, Vector3(0.32, 0.32, 0.32), Vector3(0, 1.55, -0.1), helmets[randi() % helmets.size()])
+	return root
+
+
+## People walking up and down a north–south sidewalk (x = `x`), `count` of them.
+func pedestrians_ns(x: float, z0: float, z1: float, count: int) -> void:
+	if not Game.ambient:
+		return
+	var zmin := minf(z0, z1)
+	var zmax := maxf(z0, z1)
+	var shirts := [Color(0.85, 0.3, 0.3), Color(0.3, 0.5, 0.85), Color(0.95, 0.95, 0.9), Color(0.35, 0.6, 0.35), Color(0.6, 0.45, 0.3), Color(0.2, 0.2, 0.25)]
+	for i in count:
+		var start := randf_range(zmin, zmax)
+		var north := randf() < 0.5
+		var a := Vector3(x + randf_range(-0.4, 0.4), 0, start)
+		var b := Vector3(a.x, 0, zmin if north else zmax)
+		var c := Vector3(a.x, 0, zmax if north else zmin)
+		var walker := NpcVehicle.make_custom(self, _person(shirts[randi() % shirts.size()], randf_range(0.9, 1.05)),
+			AABB(Vector3(-0.25, 0, -0.2), Vector3(0.5, 1.7, 0.4)), [a, b, c] as Array[Vector3], randf_range(1.1, 1.5))
+		walker.loop = true
+		walker.yields = false
 
 
 ## 聯結車: Kenney truck cab in front (+Z) pulling a long box trailer. Bounds for make_custom:
