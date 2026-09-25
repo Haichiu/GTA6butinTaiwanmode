@@ -15,7 +15,7 @@ func _ready() -> void:
 	box.add_theme_constant_override("separation", 18)
 	add_child(box)
 	box.add_child(_label("GTA6 but in Taiwan mode", 64, Color(1, 0.85, 0.3), true))
-	box.add_child(_label("你不是輸在技術，是輸給交通法規。", 30, Color.WHITE))
+	box.add_child(_label("你來騎騎看。", 30, Color.WHITE))
 	box.add_child(_label("方向鍵／WASD 騎車　R／Enter／空白鍵 重來", 22, Color(0.75, 0.75, 0.75)))
 	box.add_child(_label("按空白鍵開始", 28, Color(0.7, 0.9, 1.0)))
 	_gm_hint = _label("", 20, Color(1, 0.85, 0.3))

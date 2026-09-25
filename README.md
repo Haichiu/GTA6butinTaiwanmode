@@ -1,6 +1,6 @@
 # GTA6 but in Taiwan mode
 
-一款諷刺台灣交通法規的 3D 機車小遊戲：你不是輸在技術，而是輸給反直覺的法規。
+一款諷刺台灣交通法規的 3D 機車小遊戲。你來騎騎看。
 每張罰單都引用真實條文與裁罰基準表金額（見 [docs/laws.md](docs/laws.md)）。
 
 - 引擎：Godot 4.7（GDScript，Compatibility 渲染器）
