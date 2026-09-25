@@ -7,6 +7,8 @@ var contrast_id := ""
 var caption := ""
 ## If non-zero, only trigger when the scooter's forward vector points within ~60° of this direction.
 var heading := Vector3.ZERO
+## Optional extra gate, e.g. "only while the light is red". Returns bool.
+var condition := Callable()
 
 
 ## Convenience: create a zone covering [min_xz, max_xz] on the ground.
@@ -28,17 +30,26 @@ static func make(parent: Node3D, min_xz: Vector2, max_xz: Vector2, law: String, 
 	return zone
 
 
+## Chainable: only trigger while `c` returns true.
+func when(c: Callable) -> ViolationZone:
+	condition = c
+	return self
+
+
 func _ready() -> void:
 	monitorable = false
-	body_entered.connect(_on_body_entered)
 
 
-func _on_body_entered(body: Node3D) -> void:
-	var scooter := body as Scooter
-	if scooter == null or scooter.frozen:
-		return
-	if heading != Vector3.ZERO:
-		var forward := -scooter.global_transform.basis.z
-		if forward.dot(heading) < 0.5:
-			return
-	Game.report(law_id, contrast_id, caption)
+# Polled rather than body_entered: conditions (lights, flags) can flip while the scooter is inside.
+func _physics_process(_delta: float) -> void:
+	for body in get_overlapping_bodies():
+		var scooter := body as Scooter
+		if scooter == null or scooter.frozen:
+			continue
+		if heading != Vector3.ZERO:
+			var forward := -scooter.global_transform.basis.z
+			if forward.dot(heading) < 0.5:
+				continue
+		if condition.is_valid() and not condition.call():
+			continue
+		Game.report(law_id, contrast_id, caption)

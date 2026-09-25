@@ -1,15 +1,33 @@
 class_name LevelBase
 extends Node3D
-## Shared level setup: lighting, ground, scooter, camera, HUD.
-## Subclasses override build() to lay out roads, and spawn_transform() for the start.
+## Shared level setup: lighting, ground, scooter, camera, HUD, GPS arrow, goal and level flow.
+## Subclasses set title/objective, override build() to lay out the level and spawn_transform().
+
+const K = preload("res://scripts/road_kit.gd")
+const ROADS := "res://assets/kenney/roads/Models/GLB format/"
+const CARS := "res://assets/kenney/cars/Models/GLB format/"
+const CITY := "res://assets/kenney/commercial/Models/GLB format/"
+## Tolerance so brushing the curb line isn't a sidewalk ticket.
+const CURB := 0.3
+const BUILDINGS := ["building-a", "building-b", "building-c", "building-d", "building-e", "building-f", "building-g", "building-h"]
+
+var title := ""
+var objective := ""
+## Waypoints the GPS arrow points through, in order. It always suggests the "obvious" route.
+var gps: Array[Vector3] = []
 
 var scooter: Scooter
 var camera: FollowCamera
 var _speed_label: Label
 var _fine_label: Label
 var _message: Label
+var _intro: Label
+var _arrow: Node3D
+var _gps_index := 0
 var _ended := false
-var _can_restart := false
+var _won := false
+var _can_continue := false
+var _building_i := 0
 
 
 func _ready() -> void:
@@ -17,17 +35,26 @@ func _ready() -> void:
 	build()
 	scooter = Scooter.new()
 	scooter.name = "Scooter"
+	# Set the transform before entering the tree so it never exists at the origin (inside zones).
+	scooter.transform = spawn_transform()
 	add_child(scooter)
-	scooter.global_transform = spawn_transform()
 	camera = FollowCamera.new()
 	camera.target = scooter
 	add_child(camera)
 	camera.make_current()
+	_arrow = _build_arrow()
+	add_child(_arrow)
 	_setup_hud()
 	Game.violated.connect(_on_violated)
+	after_spawn()
 
 
 func build() -> void:
+	pass
+
+
+## Hook for things that need the scooter (NPC targets etc.).
+func after_spawn() -> void:
 	pass
 
 
@@ -38,15 +65,21 @@ func spawn_transform() -> Transform3D:
 func _process(_delta: float) -> void:
 	_speed_label.text = "%d km/h" % roundi(scooter.speed_kmh())
 	_fine_label.text = "今日罰款 NT$ %s" % Ticket._money(Game.total_fine)
+	_update_arrow()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _can_restart and event.is_action_pressed("restart"):
-		get_tree().reload_current_scene()
+	if _can_continue and event.is_action_pressed("restart"):
+		if _won:
+			Game.next_level()
+		else:
+			get_tree().reload_current_scene()
 
+
+# --- Level flow -----------------------------------------------------------
 
 ## Area that ends the level successfully when the scooter reaches it.
-func goal(min_xz: Vector2, max_xz: Vector2, text := "抵達目的地") -> void:
+func goal(min_xz: Vector2, max_xz: Vector2) -> void:
 	var area := Area3D.new()
 	var shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()
@@ -58,15 +91,13 @@ func goal(min_xz: Vector2, max_xz: Vector2, text := "抵達目的地") -> void:
 	area.position = Vector3(center.x, 1.5, center.y)
 	area.body_entered.connect(func(body: Node3D) -> void:
 		if body == scooter and not _ended:
-			_end()
-			_show_message("%s！\n按 R／Enter／空白鍵 再玩一次" % text))
+			win())
 	add_child(area)
-	# Visible marker: a translucent green column.
 	var marker := MeshInstance3D.new()
 	var mesh := BoxMesh.new()
 	mesh.size = Vector3(size.x, 0.05, size.y)
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.2, 0.9, 0.4, 0.35)
+	mat.albedo_color = Color(0.2, 0.9, 0.4, 0.4)
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mesh.material = mat
@@ -75,20 +106,64 @@ func goal(min_xz: Vector2, max_xz: Vector2, text := "抵達目的地") -> void:
 	add_child(marker)
 
 
-func _on_violated(law_id: String, contrast_id: String, caption: String) -> void:
+func win() -> void:
+	_won = true
+	_end()
+	_show_message("抵達目的地！\n按空白鍵前往下一關")
+
+
+## Non-ticket failure (e.g. hit by a truck): message then restart.
+func fail(text: String) -> void:
+	if _ended:
+		return
+	_end()
+	_show_message(text + "\n按空白鍵重來")
+
+
+func _on_violated(law_id: String, contrast_id: String, caption: String, charged: bool) -> void:
 	if _ended:
 		return
 	_end()
 	var ticket := Ticket.new()
 	add_child(ticket)
-	ticket.show_ticket(law_id, contrast_id, caption)
+	ticket.show_ticket(law_id, contrast_id, caption, charged)
 
 
 func _end() -> void:
 	_ended = true
 	scooter.frozen = true
+	_intro.visible = false
 	# Short grace period so a held key doesn't skip the ticket instantly.
-	get_tree().create_timer(0.6).timeout.connect(func() -> void: _can_restart = true)
+	get_tree().create_timer(0.6).timeout.connect(func() -> void: _can_continue = true)
+
+
+## Transient notice in the top-left (reuses the intro label).
+func toast(text: String, seconds := 4.0) -> void:
+	_intro.text = text
+	_intro.visible = true
+	_intro.modulate.a = 1.0
+	var tw := create_tween()
+	tw.tween_interval(seconds)
+	tw.tween_property(_intro, "modulate:a", 0.0, 0.8)
+
+
+## One-shot area that calls `fn` when the scooter enters it.
+func on_enter(min_xz: Vector2, max_xz: Vector2, fn: Callable) -> void:
+	var area := Area3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	var size := max_xz - min_xz
+	box.size = Vector3(size.x, 3.0, size.y)
+	shape.shape = box
+	area.add_child(shape)
+	var center := (min_xz + max_xz) / 2.0
+	area.position = Vector3(center.x, 1.5, center.y)
+	var fired := [false]
+	area.body_entered.connect(func(body: Node3D) -> void:
+		if body == scooter and not fired[0]:
+			fired[0] = true
+			fn.call())
+	add_child(area)
 
 
 func _show_message(text: String) -> void:
@@ -96,13 +171,55 @@ func _show_message(text: String) -> void:
 	_message.visible = true
 
 
+# --- Building helpers -----------------------------------------------------
+
+## Lane lines along the north-south axis at each x in `xs`. kinds: "yellow2", "dash", "solid", "edge".
+func lines_ns(xs: Array, kinds: Array, z0: float, z1: float) -> void:
+	for i in xs.size():
+		_line_kind(Vector2(xs[i], z0), Vector2(xs[i], z1), kinds[i], Vector2(1, 0))
+
+
+## Lane lines along the east-west axis at each z in `zs`.
+func lines_ew(zs: Array, kinds: Array, x0: float, x1: float) -> void:
+	for i in zs.size():
+		_line_kind(Vector2(x0, zs[i]), Vector2(x1, zs[i]), kinds[i], Vector2(0, 1))
+
+
+func _line_kind(a: Vector2, b: Vector2, kind: String, side: Vector2) -> void:
+	match kind:
+		"yellow2":
+			K.line(self, a - side * 0.2, b - side * 0.2, K.YELLOW)
+			K.line(self, a + side * 0.2, b + side * 0.2, K.YELLOW)
+		"dash":
+			K.line(self, a, b, K.WHITE, K.LINE_W, 4.0)
+		"solid", "edge":
+			K.line(self, a, b, K.WHITE)
+
+
+## A row of buildings along x = `x` from z0 to z1, fronts facing the road (sign of `face`: +1 = east).
+func buildings_ns(x: float, z0: float, z1: float, face: int) -> void:
+	var z := minf(z0, z1) + 8.0
+	while z < maxf(z0, z1) - 6.0:
+		model(CITY + BUILDINGS[_building_i % BUILDINGS.size()] + ".glb", Vector3(x, 0, z), PI / 2.0 * face, 14.0, true)
+		_building_i += 1
+		z += 16.0
+
+
+func buildings_ew(z: float, x0: float, x1: float, face: int) -> void:
+	var x := minf(x0, x1) + 8.0
+	while x < maxf(x0, x1) - 6.0:
+		model(CITY + BUILDINGS[_building_i % BUILDINGS.size()] + ".glb", Vector3(x, 0, z), 0.0 if face > 0 else PI, 14.0, true)
+		_building_i += 1
+		x += 16.0
+
+
 ## Place a Kenney GLB, uniformly scaled so its largest horizontal extent equals `size` meters.
 func model(path: String, pos: Vector3, rot_y := 0.0, size := 0.0, collide := false) -> Node3D:
 	var inst: Node3D = load(path).instantiate()
 	var holder := Node3D.new()
 	holder.add_child(inst)
+	var aabb := aabb_of(inst)
 	if size > 0.0:
-		var aabb := _aabb(inst)
 		var extent := maxf(aabb.size.x, aabb.size.z)
 		if extent > 0.0:
 			holder.scale = Vector3.ONE * (size / extent)
@@ -110,7 +227,6 @@ func model(path: String, pos: Vector3, rot_y := 0.0, size := 0.0, collide := fal
 		var body := StaticBody3D.new()
 		var shape := CollisionShape3D.new()
 		var box_shape := BoxShape3D.new()
-		var aabb := _aabb(inst)
 		box_shape.size = aabb.size
 		shape.shape = box_shape
 		shape.position = aabb.get_center()
@@ -122,27 +238,47 @@ func model(path: String, pos: Vector3, rot_y := 0.0, size := 0.0, collide := fal
 	return holder
 
 
-func _aabb(node: Node) -> AABB:
+## Floating sign (e.g. 兩段式左轉 / 國道入口) on a pole.
+func sign_board(text: String, pos: Vector3, facing_y: float, bg := Color(0.15, 0.35, 0.75), height := 4.0) -> void:
+	var root := Node3D.new()
+	root.position = pos
+	root.rotation.y = facing_y
+	add_child(root)
+	K.box(root, Vector3(0.15, height, 0.15), Vector3(0, height / 2.0, 0), Color(0.5, 0.5, 0.5))
+	var lines := text.split("\n")
+	var width := 0.0
+	for l in lines:
+		width = maxf(width, l.length() * 0.55)
+	var h := lines.size() * 0.6 + 0.4
+	K.box(root, Vector3(width + 0.6, h, 0.1), Vector3(0, height + h / 2.0, 0), bg)
+	var label := Label3D.new()
+	label.text = text
+	label.font = K.font()
+	label.font_size = 96
+	label.pixel_size = 0.005
+	label.position = Vector3(0, height + h / 2.0, 0.06)
+	label.modulate = Color.WHITE
+	root.add_child(label)
+
+
+static func aabb_of(node: Node) -> AABB:
 	var result := AABB()
 	var first := true
 	for child in node.find_children("*", "MeshInstance3D", true, false):
 		var mi := child as MeshInstance3D
-		var xf := _relative_transform(mi, node)
+		var xf := mi.transform
+		var p := mi.get_parent()
+		while p != null and p != node:
+			if p is Node3D:
+				xf = (p as Node3D).transform * xf
+			p = p.get_parent()
 		var box := xf * mi.get_aabb()
 		result = box if first else result.merge(box)
 		first = false
 	return result
 
 
-func _relative_transform(node: Node3D, root: Node) -> Transform3D:
-	var xf := node.transform
-	var p := node.get_parent()
-	while p != null and p != root:
-		if p is Node3D:
-			xf = (p as Node3D).transform * xf
-		p = p.get_parent()
-	return xf
-
+# --- Setup ---------------------------------------------------------------
 
 func _setup_environment() -> void:
 	var env := Environment.new()
@@ -170,27 +306,77 @@ func _setup_environment() -> void:
 	add_child(sun)
 
 	# Ground plane with collision; top surface at y=0.
-	RoadKit.box(self, Vector3(600, 1, 600), Vector3(0, -0.5, 0), RoadKit.GRASS, true)
+	K.box(self, Vector3(1200, 1, 1200), Vector3(0, -0.5, 0), K.GRASS, true)
+
+
+func _build_arrow() -> Node3D:
+	var root := Node3D.new()
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.2, 0.75, 1.0)
+	mat.emission_enabled = true
+	mat.emission = Color(0.1, 0.5, 0.9)
+	var shaft := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = Vector3(0.25, 0.08, 1.0)
+	box.material = mat
+	shaft.mesh = box
+	shaft.position.z = 0.2
+	root.add_child(shaft)
+	var head := MeshInstance3D.new()
+	var prism := PrismMesh.new()
+	prism.size = Vector3(0.8, 0.7, 0.08)
+	prism.material = mat
+	head.mesh = prism
+	head.rotation.x = -PI / 2.0  # tip points to -Z
+	head.position.z = -0.6
+	root.add_child(head)
+	return root
+
+
+func _update_arrow() -> void:
+	_arrow.visible = not gps.is_empty() and not _ended
+	if not _arrow.visible:
+		return
+	while _gps_index < gps.size() - 1 and _flat_dist(scooter.global_position, gps[_gps_index]) < 10.0:
+		_gps_index += 1
+	var to := gps[_gps_index] - scooter.global_position
+	_arrow.global_position = scooter.global_position + Vector3.UP * 2.6
+	_arrow.rotation.y = atan2(-to.x, -to.z)
+
+
+static func _flat_dist(a: Vector3, b: Vector3) -> float:
+	return Vector2(a.x - b.x, a.z - b.z).length()
 
 
 func _setup_hud() -> void:
 	var layer := CanvasLayer.new()
 	add_child(layer)
-	_speed_label = Label.new()
+	_speed_label = _hud_label(32)
 	_speed_label.position = Vector2(24, 650)
-	_speed_label.add_theme_font_size_override("font_size", 32)
-	_speed_label.add_theme_color_override("font_outline_color", Color.BLACK)
-	_speed_label.add_theme_constant_override("outline_size", 6)
 	layer.add_child(_speed_label)
-	_fine_label = _speed_label.duplicate()
+	_fine_label = _hud_label(26)
 	_fine_label.position = Vector2(900, 20)
-	_fine_label.add_theme_font_size_override("font_size", 26)
 	layer.add_child(_fine_label)
-	_message = _speed_label.duplicate()
-	_message.set_anchors_preset(Control.PRESET_CENTER)
+	_message = _hud_label(40)
 	_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_message.position = Vector2(340, 300)
-	_message.size = Vector2(600, 120)
-	_message.add_theme_font_size_override("font_size", 40)
+	_message.position = Vector2(240, 280)
+	_message.size = Vector2(800, 160)
 	_message.visible = false
 	layer.add_child(_message)
+	_intro = _hud_label(30)
+	_intro.position = Vector2(24, 20)
+	_intro.size = Vector2(840, 120)
+	_intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_intro.text = "第 %d 關：%s\n%s" % [Game.level_index + 1, title, objective]
+	layer.add_child(_intro)
+	var tw := create_tween()
+	tw.tween_interval(6.0)
+	tw.tween_property(_intro, "modulate:a", 0.0, 1.0)
+
+
+func _hud_label(size: int) -> Label:
+	var label := Label.new()
+	label.add_theme_font_size_override("font_size", size)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.add_theme_constant_override("outline_size", 8)
+	return label
