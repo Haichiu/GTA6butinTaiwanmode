@@ -4,7 +4,7 @@ class_name RoadKit
 ## ground 0, asphalt 0.02, paint 0.04, text 0.05.
 
 const ASPHALT := Color(0.24, 0.24, 0.26)
-const SIDEWALK := Color(0.5, 0.48, 0.45)
+const SIDEWALK := Color(0.42, 0.4, 0.38)
 const WHITE := Color(0.95, 0.95, 0.92)
 const YELLOW := Color(0.98, 0.8, 0.2)
 const RED := Color(0.85, 0.2, 0.18)

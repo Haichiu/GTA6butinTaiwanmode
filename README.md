@@ -5,7 +5,8 @@
 
 - 引擎：Godot 4.7（GDScript，Compatibility 渲染器）
 - 執行：`godot --path .`
-- 測試：`godot --headless --path . res://tests/smoke.tscn`
+- 測試：`tests/run.sh`（全部關卡，約 10 秒）或 `tests/run.sh 3 5`（指定關卡）
+- 截圖：`godot --path . res://tests/shot.tscn -- <輸出資料夾>`
 - 規劃：[docs/plan.md](docs/plan.md)
 
 ## 素材授權
