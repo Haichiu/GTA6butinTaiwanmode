@@ -10,6 +10,9 @@
 - 網頁版：`godot --headless --path . --export-release "Web" build/web/index.html`，本機測試用 `python3 -m http.server 8060 --directory build/web`
 - 規劃：[docs/plan.md](docs/plan.md)
 
+## 致敬
+本作致敬 AnyueDontSnipe 的《亞洲人難度 Asian Difficulty》（https://anyuedontsnipe.itch.io/asiandifficulty ），該作靈感來自 Steven He 與 Uncle Roger。
+
 ## 素材授權
 - 3D 模型：Kenney City Kit (Roads)、Car Kit、City Kit (Commercial)，CC0（www.kenney.nl）
 - 字型：Noto Sans TC，SIL Open Font License 1.1（assets/fonts/LICENSE-OFL.txt）
