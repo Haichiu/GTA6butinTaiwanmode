@@ -125,18 +125,32 @@ func _cases() -> Array:
 			await _drive(l, [Vector3(5.25, 0, 0), Vector3(8.3, 0, -20), Vector3(8.3, 0, -188), Vector3(5.25, 0, -210), Vector3(5.25, 0, -284)], 3.2, 150.0)
 			_expect_win(l)],
 
-		[7, "照導航騎上國道", func(l: LevelBase) -> void:
-			await _drive(l, [Vector3(6.5, 0, -45), Vector3(20, 0, -95)], 8.0)
-			_expect_tickets(["highway_scooter"])],
-		[7, "被逆向聯結車撞（罰單是對方的）", func(l: LevelBase) -> void:
-			await _drive(l, [Vector3(5.25, 0, -425)], 13.0)
+		[7, "從護欄缺口騎上快速公路", func(l: LevelBase) -> void:
+			await _drive(l, [Vector3(11.25, 0, -90.0), Vector3(5.0, 0, -110.0)], 8.0)
+			_expect_tickets(["expressway_scooter"])],
+		[7, "直線衝進髮夾彎：自摔", func(l: LevelBase) -> void:
+			await _drive(l, [Vector3(11.25, 0, -140.0)], 13.0, 20.0)
 			_checks += 1
-			if not (l.truck_hit and Game.tickets.is_empty() and Game.total_fine == 0):
-				_fail("expected truck hit with no fine charged (hit=%s tickets=%s)" % [l.truck_hit, Game.tickets])],
-		[7, "合法路線：閃到路肩", func(l: LevelBase) -> void:
-			await _drive(l, [Vector3(8.3, 0, 20), Vector3(8.3, 0, -400), Vector3(5.25, 0, -426)], 13.0)
+			if not (l._ended and not l._won and Game.tickets.is_empty()):
+				_fail("expected a crash into the hairpin guardrail (ended=%s)" % l._ended)],
+		[7, "合法路線：慢慢過兩個髮夾彎", func(l: LevelBase) -> void:
+			var pts := [Vector3(11.25, 0, -110.0)]
+			for i in range(1, 9):
+				var a := PI + PI * i / 8.0
+				pts.append(Vector3(17.0 + cos(a) * 5.75, 0, -120.0 + sin(a) * 5.75))
+			pts.append(Vector3(22.75, 0, -85.0))
+			for i in range(1, 9):
+				var a := PI - PI * i / 8.0
+				pts.append(Vector3(28.5 + cos(a) * 5.75, 0, -80.0 + sin(a) * 5.75))
+			pts.append(Vector3(34.25, 0, -294.0))
+			await _drive(l, pts.slice(0, 1), 9.0)
+			await _drive(l, pts.slice(1, pts.size() - 1), 3.5, 90.0, 1.5)
+			await _drive(l, pts.slice(pts.size() - 1), 9.0)
 			_expect_win(l)],
-
+		[3, "待轉時停在格子外面", func(l: LevelBase) -> void:
+			await _teleport_expect(l, Vector3(9.0, 0.1, -3.0), PI / 2.0, [], 0.0)
+			await _frames(80)
+			_expect_tickets(["wait_outside_box"])],
 		[1, "GM 模式：吃罰單不中斷、只開一張", func(l: LevelBase) -> void:
 			Game.gm = true
 			l.scooter.global_transform = Transform3D(Basis.IDENTITY, Vector3(5.25, 0.1, 0))
@@ -149,6 +163,12 @@ func _cases() -> Array:
 				_fail("GM mode should keep the level running")],
 
 		# --- Hazards and traffic (ambient on) ---
+		[1, "聯結車跨雙黃線衝過來：沒閃被撞（對方的罰單）", func(l: LevelBase) -> void:
+			_teleport(l, Vector3(7.7, 0.1, -190.0), 0.0)
+			await _drive(l, [Vector3(7.7, 0, -296.0)], 10.0, 30.0)
+			_checks += 1
+			if not (l.truck_hit and Game.tickets.is_empty()):
+				_fail("expected the truck to hit (hit=%s tickets=%s)" % [l.truck_hit, Game.tickets]), "ambient"],
 		[1, "老阿伯衝出來：沒煞車撞上", func(l: LevelBase) -> void:
 			_teleport(l, Vector3(7.7, 0.1, -110.0), 0.0)
 			await _drive(l, [Vector3(7.7, 0, -170.0)], 10.0, 20.0)
@@ -160,7 +180,8 @@ func _cases() -> Array:
 			Input.action_press("brake")
 			await _frames(360)
 			Input.action_release("brake")
-			await _drive(l, [Vector3(7.7, 0, -270), Vector3(8.75, 0, -296)], 7.0)
+			# After the last parked van, hug the curb: the 聯結車 crossing the double yellow can't reach you.
+			await _drive(l, [Vector3(7.7, 0, -255), Vector3(9.8, 0, -262), Vector3(9.8, 0, -294)], 7.0)
 			_expect_win(l), "ambient"],
 		[5, "學校前小孩追球：撞上小孩", func(l: LevelBase) -> void:
 			l._reached_b = true
@@ -171,12 +192,12 @@ func _cases() -> Array:
 			Input.action_press("accelerate")
 			await _frames(40)
 			_expect_hit(l, "ped_play"), "ambient"],
-		[7, "追撞前車：一般道路 0 元", func(l: LevelBase) -> void:
+		[5, "追撞前車：一般道路 0 元", func(l: LevelBase) -> void:
 			var car: NpcVehicle = null
 			for i in 600:
 				await get_tree().physics_frame
 				for n in l.find_children("*", "NpcVehicle", true, false):
-					if n.free_at_end and n.global_position.x > 0.0 and n.global_position.z < 0.0:
+					if n.free_at_end and n.global_position.x > 0.0 and n.global_position.z < 20.0 and n.global_position.z > -100.0:
 						car = n
 				if car != null:
 					break

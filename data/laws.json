@@ -1,37 +1,252 @@
 {
-  "_source": "docs/laws.md — fines are 統一裁罰基準表 amounts for on-time payment, scooter column where the table splits by vehicle type",
-  "_verified": "2026-09-25",
-  "laws": {
-    "lane_ban": {"title": "機車不在規定車道行駛", "article": "道路交通管理處罰條例 第45條第1項第13款", "fine": 600, "points": 1},
-    "sidewalk": {"title": "駕車行駛人行道", "article": "道路交通管理處罰條例 第45條第1項第6款", "fine": 600, "points": 1},
-    "two_stage_left": {"title": "未依規定兩段式左轉", "article": "道路交通管理處罰條例 第48條第1項第2款", "fine": 600, "points": 1},
-    "two_stage_right": {"title": "未依規定兩段式右轉", "article": "道路交通管理處罰條例 第48條第1項第2款（道路交通安全規則 第99條第2項第2款）", "fine": 600, "points": 1},
-    "red_right": {"title": "紅燈右轉", "article": "道路交通管理處罰條例 第53條第2項", "fine": 600, "points": 1},
-    "red_light": {"title": "闖紅燈（機車）", "article": "道路交通管理處罰條例 第53條第1項", "fine": 1800, "points": 3},
-    "no_helmet": {"title": "未依規定戴安全帽", "article": "道路交通管理處罰條例 第31條第6項", "fine": 500, "points": 0},
-    "highway_scooter": {"title": "機車行駛高速公路", "article": "道路交通管理處罰條例 第33條第4項", "fine": 4000, "points": 0},
-    "highway_heavy": {"title": "大型重型機車行駛未經公告允許之國道路段", "article": "道路交通管理處罰條例 第92條第7項第1款", "fine": 4000, "points": 1},
-    "wrong_way": {"title": "不依規定駛入來車道（逆向）", "article": "道路交通管理處罰條例 第45條第1項第3款", "fine": 900, "points": 1},
-    "oncoming_truck": {"title": "聯結車不依規定駛入來車道（跨越雙黃線）", "article": "道路交通管理處罰條例 第45條第1項第3款", "fine": 1400, "points": 1},
-    "force_yield": {"title": "以迫近方式迫使他車讓道（機車）", "article": "道路交通管理處罰條例 第43條第1項第3款", "fine": 16000, "points": 3},
-    "road_banquet": {"title": "未經許可在道路擺設筵席（辦桌）", "article": "道路交通管理處罰條例 第82條第1項第9款", "fine": 1200, "points": 0},
-    "turn_lane_straight": {"title": "直行車占用轉彎專用車道", "article": "道路交通管理處罰條例 第48條第1項第7款", "fine": 600, "points": 1},
-    "car_in_box": {"title": "汽車停在機慢車停等區", "article": "道路交通管理處罰條例 第60條第2項第3款", "fine": 900, "points": 0},
-    "stop_line": {"title": "紅燈時前輪越過停止線（不遵守標線指示）", "article": "道路交通管理處罰條例 第60條第2項第3款", "fine": 900, "points": 0},
-    "crosswalk_stop": {"title": "停等時壓到行人穿越道（不遵守標線指示）", "article": "道路交通管理處罰條例 第60條第2項第3款", "fine": 900, "points": 0},
-    "turn_no_yield": {"title": "汽車轉彎不讓直行車先行", "article": "道路交通管理處罰條例 第48條第1項第6款", "fine": 900, "points": 1},
-    "turn_ignore_ped": {"title": "汽車轉彎不注意來往行人", "article": "道路交通管理處罰條例 第48條第1項第1款", "fine": 900, "points": 1},
-    "ambulance_tailgate": {"title": "跟在救護車後面急駛", "article": "道路交通管理處罰條例 第45條第1項第11款", "fine": 900, "points": 1},
-    "car_speeding": {"title": "汽車超速（20 公里以內）", "article": "道路交通管理處罰條例 第40條", "fine": 1600, "points": 1},
-    "ped_red": {"title": "行人闖紅燈", "article": "道路交通管理處罰條例 第78條第1項第1款", "fine": 500, "points": 0},
-    "no_left_turn": {"title": "不依標誌指示（禁止左轉時段左轉）", "article": "道路交通管理處罰條例 第48條第1項第2款", "fine": 600, "points": 1},
-    "uturn_no_left": {"title": "在禁止左轉路段迴車", "article": "道路交通管理處罰條例 第49條第1項第3款", "fine": 900, "points": 1},
-    "uturn_double_yellow": {"title": "在劃有分向限制線（雙黃線）路段迴車", "article": "道路交通管理處罰條例 第49條第1項第2款", "fine": 900, "points": 1},
-    "ped_jaywalk": {"title": "行人擅自穿越車道", "article": "道路交通管理處罰條例 第78條第1項第3款", "fine": 500, "points": 0},
-    "ped_play": {"title": "在車多的道路上奔跑、追逐、嬉遊", "article": "道路交通管理處罰條例 第78條第1項第4款", "fine": 500, "points": 0},
-    "pet_owner": {"title": "飼主放任狗在道路奔走", "article": "道路交通管理處罰條例 第84條", "fine": 300, "points": 0},
-    "throw_object": {"title": "在道路拋擲足以妨礙交通之物", "article": "道路交通管理處罰條例 第82條第1項第1款", "fine": 1200, "points": 0},
-    "rear_end": {"title": "一般道路追撞前車（未保持安全距離）", "article": "處罰條例對一般道路未保持安全距離沒有明定罰鍰（國道才有：第33條第1項第2款，3,000–6,000）", "fine": 0, "points": 0},
-    "rail_crossing": {"title": "平交道警鈴已響仍強行闖越（機車）", "article": "道路交通管理處罰條例 第54條第1款", "fine": 67500, "points": 0}
+ "_source": "docs/laws.md — fines are 統一裁罰基準表 amounts for on-time payment, scooter column where the table splits by vehicle type",
+ "_verified": "2026-09-25",
+ "laws": {
+  "lane_ban": {
+   "title": "機車不在規定車道行駛",
+   "article": "道路交通管理處罰條例 第45條第1項第13款",
+   "fine": 600,
+   "points": 1,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=45"
+  },
+  "sidewalk": {
+   "title": "駕車行駛人行道",
+   "article": "道路交通管理處罰條例 第45條第1項第6款",
+   "fine": 600,
+   "points": 1,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=45"
+  },
+  "two_stage_left": {
+   "title": "未依規定兩段式左轉",
+   "article": "道路交通管理處罰條例 第48條第1項第2款",
+   "fine": 600,
+   "points": 1,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=48"
+  },
+  "two_stage_right": {
+   "title": "未依規定兩段式右轉",
+   "article": "道路交通管理處罰條例 第48條第1項第2款（道路交通安全規則 第99條第2項第2款）",
+   "fine": 600,
+   "points": 1,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=48"
+  },
+  "red_right": {
+   "title": "紅燈右轉",
+   "article": "道路交通管理處罰條例 第53條第2項",
+   "fine": 600,
+   "points": 1,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=53"
+  },
+  "red_light": {
+   "title": "闖紅燈（機車）",
+   "article": "道路交通管理處罰條例 第53條第1項",
+   "fine": 1800,
+   "points": 3,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=53"
+  },
+  "no_helmet": {
+   "title": "未依規定戴安全帽",
+   "article": "道路交通管理處罰條例 第31條第6項",
+   "fine": 500,
+   "points": 0,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=31"
+  },
+  "highway_scooter": {
+   "title": "機車行駛高速公路",
+   "article": "道路交通管理處罰條例 第33條第4項",
+   "fine": 4000,
+   "points": 0,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=33"
+  },
+  "highway_heavy": {
+   "title": "大型重型機車行駛未經公告允許之國道路段",
+   "article": "道路交通管理處罰條例 第92條第7項第1款",
+   "fine": 4000,
+   "points": 1,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=92"
+  },
+  "wrong_way": {
+   "title": "不依規定駛入來車道（逆向）",
+   "article": "道路交通管理處罰條例 第45條第1項第3款",
+   "fine": 900,
+   "points": 1,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=45"
+  },
+  "oncoming_truck": {
+   "title": "聯結車不依規定駛入來車道（跨越雙黃線）",
+   "article": "道路交通管理處罰條例 第45條第1項第3款",
+   "fine": 1400,
+   "points": 1,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=45"
+  },
+  "force_yield": {
+   "title": "以迫近方式迫使他車讓道（機車）",
+   "article": "道路交通管理處罰條例 第43條第1項第3款",
+   "fine": 16000,
+   "points": 3,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=43"
+  },
+  "road_banquet": {
+   "title": "未經許可在道路擺設筵席（辦桌）",
+   "article": "道路交通管理處罰條例 第82條第1項第9款",
+   "fine": 1200,
+   "points": 0,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=82"
+  },
+  "turn_lane_straight": {
+   "title": "直行車占用轉彎專用車道",
+   "article": "道路交通管理處罰條例 第48條第1項第7款",
+   "fine": 600,
+   "points": 1,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=48"
+  },
+  "car_in_box": {
+   "title": "汽車停在機慢車停等區",
+   "article": "道路交通管理處罰條例 第60條第2項第3款",
+   "fine": 900,
+   "points": 0,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=60"
+  },
+  "stop_line": {
+   "title": "紅燈時前輪越過停止線（不遵守標線指示）",
+   "article": "道路交通管理處罰條例 第60條第2項第3款",
+   "fine": 900,
+   "points": 0,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=60"
+  },
+  "crosswalk_stop": {
+   "title": "停等時壓到行人穿越道（不遵守標線指示）",
+   "article": "道路交通管理處罰條例 第60條第2項第3款",
+   "fine": 900,
+   "points": 0,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=60"
+  },
+  "turn_no_yield": {
+   "title": "汽車轉彎不讓直行車先行",
+   "article": "道路交通管理處罰條例 第48條第1項第6款",
+   "fine": 900,
+   "points": 1,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=48"
+  },
+  "turn_ignore_ped": {
+   "title": "汽車轉彎不注意來往行人",
+   "article": "道路交通管理處罰條例 第48條第1項第1款",
+   "fine": 900,
+   "points": 1,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=48"
+  },
+  "ambulance_tailgate": {
+   "title": "跟在救護車後面急駛",
+   "article": "道路交通管理處罰條例 第45條第1項第11款",
+   "fine": 900,
+   "points": 1,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=45"
+  },
+  "car_speeding": {
+   "title": "汽車超速（20 公里以內）",
+   "article": "道路交通管理處罰條例 第40條",
+   "fine": 1600,
+   "points": 1,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=40"
+  },
+  "ped_red": {
+   "title": "行人闖紅燈",
+   "article": "道路交通管理處罰條例 第78條第1項第1款",
+   "fine": 500,
+   "points": 0,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=78"
+  },
+  "no_left_turn": {
+   "title": "不依標誌指示（禁止左轉時段左轉）",
+   "article": "道路交通管理處罰條例 第48條第1項第2款",
+   "fine": 600,
+   "points": 1,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=48"
+  },
+  "uturn_no_left": {
+   "title": "在禁止左轉路段迴車",
+   "article": "道路交通管理處罰條例 第49條第1項第3款",
+   "fine": 900,
+   "points": 1,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=49"
+  },
+  "uturn_double_yellow": {
+   "title": "在劃有分向限制線（雙黃線）路段迴車",
+   "article": "道路交通管理處罰條例 第49條第1項第2款",
+   "fine": 900,
+   "points": 1,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=49"
+  },
+  "ped_jaywalk": {
+   "title": "行人擅自穿越車道",
+   "article": "道路交通管理處罰條例 第78條第1項第3款",
+   "fine": 500,
+   "points": 0,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=78"
+  },
+  "ped_play": {
+   "title": "在車多的道路上奔跑、追逐、嬉遊",
+   "article": "道路交通管理處罰條例 第78條第1項第4款",
+   "fine": 500,
+   "points": 0,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=78"
+  },
+  "pet_owner": {
+   "title": "飼主放任狗在道路奔走",
+   "article": "道路交通管理處罰條例 第84條",
+   "fine": 300,
+   "points": 0,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=84"
+  },
+  "throw_object": {
+   "title": "在道路拋擲足以妨礙交通之物",
+   "article": "道路交通管理處罰條例 第82條第1項第1款",
+   "fine": 1200,
+   "points": 0,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=82"
+  },
+  "rear_end": {
+   "title": "一般道路追撞前車（未保持安全距離）",
+   "article": "處罰條例對一般道路未保持安全距離沒有明定罰鍰（國道才有：第33條第1項第2款，3,000–6,000）",
+   "fine": 0,
+   "points": 0,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=33"
+  },
+  "wait_outside_box": {
+   "title": "兩段式轉彎未在待轉區內停等",
+   "article": "道路交通管理處罰條例 第48條（警方說明：機車未於待轉區內待轉）",
+   "fine": 600,
+   "points": 1,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=48"
+  },
+  "speeding_scooter": {
+   "title": "機車超速（20 公里以內）",
+   "article": "道路交通管理處罰條例 第40條",
+   "fine": 1200,
+   "points": 1,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=40"
+  },
+  "speeding_scooter_40": {
+   "title": "機車超速（逾 20 至 40 公里）",
+   "article": "道路交通管理處罰條例 第40條",
+   "fine": 1400,
+   "points": 1,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=40"
+  },
+  "rail_crossing": {
+   "title": "平交道警鈴已響仍強行闖越（機車）",
+   "article": "道路交通管理處罰條例 第54條第1款",
+   "fine": 67500,
+   "points": 0,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=54"
+  },
+  "expressway_scooter": {
+   "title": "機車行駛快速公路（未開放機車之車道）",
+   "article": "道路交通管理處罰條例 第33條第4項",
+   "fine": 4000,
+   "points": 0,
+   "url": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=33"
   }
+ },
+ "_fine_table": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=D0080029"
 }

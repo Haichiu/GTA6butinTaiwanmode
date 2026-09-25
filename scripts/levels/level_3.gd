@@ -87,6 +87,8 @@ func build() -> void:
 		buildings_ns(sx * (HALF + WALK + 8.0), -120.0, -EW - WALK, -sx)
 
 	box = WaitBox.make(self, BOX_MIN, BOX_MAX)
+	# Stopping to wait anywhere in the intersection (or next to the box) other than in it.
+	box.turn_area = Rect2(Vector2(-HALF, -EW), Vector2(HALF + 3.8 + HALF, 2.0 * EW))
 	_add_rules()
 	gps = [Vector3(5.0, 0, -2.0), Vector3(-95.0, 0, -3.5)]
 

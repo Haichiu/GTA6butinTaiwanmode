@@ -169,18 +169,18 @@ func darter(kind: String, from: Vector3, to: Vector3, trigger: float) -> void:
 			var npc := NpcVehicle.make_custom(self, _person(Color(0.97, 0.97, 0.93), 0.95), AABB(Vector3(-0.3, 0, -0.2), Vector3(0.6, 1.8, 0.4)), uncle_path, 1.6)
 			npc.dwell = {1: 3.0}
 			_arm_darter(npc, trigger, func() -> void:
-				_hazard_hit("ped_jaywalk", "老阿伯擅自穿越車道，罰 500。\n撞到他的你，可能要面對過失傷害的刑事責任，加上民事賠償。"))
+				_hazard_hit("ped_jaywalk", "老阿伯擅自穿越車道，罰 500。\n你的強制險最多只幫他付醫療費 20 萬，超過的、還有可能的過失傷害責任，你自己扛。"))
 		"dog":
 			var npc := NpcVehicle.make_custom(self, _dog(), AABB(Vector3(-0.2, 0, -0.45), Vector3(0.4, 0.6, 0.9)), path, 6.0)
 			_arm_darter(npc, trigger, func() -> void:
-				_hazard_hit("pet_owner", "狗主人放狗在馬路上跑，罰 300。\n你摔車、修車、看醫生，自己出。"))
+				_hazard_hit("pet_owner", "狗主人放狗在馬路上跑，罰 300。\n強制險只賠人不賠狗：狗的醫藥費、你的修車費，自己出。"))
 		"ball":
 			var ball := NpcVehicle.make_custom(self, _ball(), AABB(Vector3(-0.2, 0, -0.2), Vector3(0.4, 0.4, 0.4)), path, 5.0)
 			_arm_darter(ball, trigger, func() -> void: toast("一顆球從車底滾過去了……", 2.0))
 			var kid_path: Array[Vector3] = [from - (to - from).normalized() * 3.0, to]
 			var kid := NpcVehicle.make_custom(self, _person(Color(0.95, 0.75, 0.2), 0.6), AABB(Vector3(-0.2, 0, -0.15), Vector3(0.4, 1.1, 0.3)), kid_path, 3.0)
 			_arm_darter(kid, trigger + 4.0, func() -> void:
-				_hazard_hit("ped_play", "小孩在馬路上追球，罰 500（對，行人也會被罰）。\n撞到小孩的你，可能要面對過失傷害的刑事責任，加上民事賠償。"))
+				_hazard_hit("ped_play", "小孩在馬路上追球，罰 500（對，行人也會被罰）。\n強制險最多幫他付醫療費 20 萬；超過的、還有可能的過失傷害責任，你自己扛。"))
 
 
 func _arm_darter(npc: NpcVehicle, trigger: float, on_hit: Callable) -> void:
@@ -236,6 +236,24 @@ func _car_contact(car: Node3D) -> void:
 			"一般道路追撞前車：處罰條例找不到罰鍰，0 元。\n但修車、保險、跟對方喬，全部自己來。同樣的事在國道罰 3,000 起。")
 	else:
 		fail("跟汽車擦撞了。")
+
+
+## 聯結車: Kenney truck cab in front (+Z) pulling a long box trailer. Bounds for make_custom:
+## AABB(Vector3(-1.3, 0, -11), Vector3(2.6, 4, 16)).
+func semi_truck() -> Node3D:
+	var root := Node3D.new()
+	var cab: Node3D = load(CARS + "truck.glb").instantiate()
+	var holder := Node3D.new()
+	holder.add_child(cab)
+	var aabb := aabb_of(cab)
+	holder.scale = Vector3.ONE * (2.6 / aabb.size.x)
+	holder.position.z = 2.0
+	root.add_child(holder)
+	K.box(root, Vector3(2.6, 3.0, 11.0), Vector3(0, 2.1, -5.5), Color(0.85, 0.85, 0.82))
+	K.box(root, Vector3(2.4, 0.3, 11.0), Vector3(0, 0.45, -5.5), Color(0.2, 0.2, 0.2))
+	for z in [-8.5, -9.8]:
+		K.box(root, Vector3(2.7, 0.9, 0.9), Vector3(0, 0.45, z), Color(0.1, 0.1, 0.1))
+	return root
 
 
 func _dog() -> Node3D:
