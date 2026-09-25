@@ -1,6 +1,8 @@
 extends Control
 ## Title screen.
 
+var _gm_hint: Label
+
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -16,6 +18,12 @@ func _ready() -> void:
 	box.add_child(_label("你不是輸在技術，是輸給交通法規。", 30, Color.WHITE))
 	box.add_child(_label("方向鍵／WASD 騎車　R／Enter／空白鍵 重來", 22, Color(0.75, 0.75, 0.75)))
 	box.add_child(_label("按空白鍵開始", 28, Color(0.7, 0.9, 1.0)))
+	_gm_hint = _label("", 20, Color(1, 0.85, 0.3))
+	box.add_child(_gm_hint)
+
+
+func _process(_delta: float) -> void:
+	_gm_hint.text = "GM 模式：開啟（1–7 直接選關）" if Game.gm else "按 G 開啟 GM 模式（測試用：罰單不中斷、可選關）"
 
 
 func _unhandled_input(event: InputEvent) -> void:

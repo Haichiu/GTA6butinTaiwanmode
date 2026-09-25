@@ -137,6 +137,17 @@ func _cases() -> Array:
 			await _drive(l, [Vector3(8.3, 0, 20), Vector3(8.3, 0, -400), Vector3(5.25, 0, -426)], 13.0)
 			_expect_win(l)],
 
+		[1, "GM 模式：吃罰單不中斷、只開一張", func(l: LevelBase) -> void:
+			Game.gm = true
+			l.scooter.global_transform = Transform3D(Basis.IDENTITY, Vector3(5.25, 0.1, 0))
+			l.scooter.speed = 3.0
+			await _frames(60)
+			Game.gm = false
+			_expect_tickets(["lane_ban"])
+			_checks += 1
+			if l._ended or l.scooter.frozen:
+				_fail("GM mode should keep the level running")],
+
 		# --- Hazards and traffic (ambient on) ---
 		[1, "老阿伯衝出來：沒煞車撞上", func(l: LevelBase) -> void:
 			_teleport(l, Vector3(7.7, 0.1, -110.0), 0.0)

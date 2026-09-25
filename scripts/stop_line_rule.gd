@@ -21,6 +21,7 @@ var lateral_max := 0.0
 
 var _armed := false
 var _warned := false
+var _fined := false  # one stop-line ticket per stop (GM mode keeps riding)
 
 
 static func make(lvl: LevelBase, s: TrafficSignal, ax: String, dir: Vector3, line_point: Vector3, lat_min: float, lat_max: float) -> StopLineRule:
@@ -55,12 +56,15 @@ func _physics_process(_delta: float) -> void:
 			_armed = false  # went through on green/yellow
 		return
 	if rear_past:
+		_armed = false  # one red-light ticket per crossing
 		Game.report("red_light", "car_speeding",
 			"整台車過了停止線＝闖紅燈 1,800；汽車超速 20 公里以內只要 1,600。")
 		return
 	if s.speed > 0.3:
+		_fined = false
 		return
-	if along + FRONT_WHEEL > 0.0:
+	if along + FRONT_WHEEL > 0.0 and not _fined:
+		_fined = true
 		Game.report("stop_line", "car_in_box",
 			"前輪壓過停止線 900＝一台汽車整台停在機車停等區 900。")
 	elif along + NOSE > 0.0 and not _warned:
