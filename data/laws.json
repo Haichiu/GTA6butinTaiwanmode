@@ -11,6 +11,7 @@
     "no_helmet": {"title": "未依規定戴安全帽", "article": "道路交通管理處罰條例 第31條第6項", "fine": 500, "points": 0},
     "highway_scooter": {"title": "機車行駛高速公路", "article": "道路交通管理處罰條例 第33條第4項", "fine": 4000, "points": 0},
     "highway_heavy": {"title": "大型重型機車行駛未經公告允許之國道路段", "article": "道路交通管理處罰條例 第92條第7項第1款", "fine": 4000, "points": 1},
+    "wrong_way": {"title": "不依規定駛入來車道（逆向）", "article": "道路交通管理處罰條例 第45條第1項第3款", "fine": 900, "points": 1},
     "oncoming_truck": {"title": "聯結車不依規定駛入來車道（跨越雙黃線）", "article": "道路交通管理處罰條例 第45條第1項第3款", "fine": 1400, "points": 1},
     "force_yield": {"title": "以迫近方式迫使他車讓道（機車）", "article": "道路交通管理處罰條例 第43條第1項第3款", "fine": 16000, "points": 3},
     "road_banquet": {"title": "未經許可在道路擺設筵席（辦桌）", "article": "道路交通管理處罰條例 第82條第1項第9款", "fine": 1200, "points": 0},

@@ -1,10 +1,20 @@
 extends Node
-## Global game state (autoload "Game"): input setup, law data, and the running fine tally.
+## Global game state (autoload "Game"): input setup, law data, level order and the running fine tally.
 ## The tally survives restarts on purpose: every retry costs you.
 
-signal violated(law_id: String, contrast_id: String, caption: String)
+## charged=false means the ticket is someone else's (shown for contrast, not added to your total).
+signal violated(law_id: String, contrast_id: String, caption: String, charged: bool)
 
 const LAWS_PATH := "res://data/laws.json"
+const LEVELS: Array[String] = [
+	"res://scenes/levels/level_1.tscn",
+	"res://scenes/levels/level_2.tscn",
+	"res://scenes/levels/level_3.tscn",
+	"res://scenes/levels/level_4.tscn",
+	"res://scenes/levels/level_5.tscn",
+	"res://scenes/levels/level_6.tscn",
+]
+const SUMMARY := "res://scenes/summary.tscn"
 const KEYS := {
 	"accelerate": [KEY_UP, KEY_W],
 	"brake": [KEY_DOWN, KEY_S],
@@ -16,7 +26,8 @@ const KEYS := {
 var laws := {}
 var total_fine := 0
 var total_points := 0
-var tickets: Array[String] = []  # law ids, in the order they were issued
+var tickets: Array[String] = []  # law ids charged to the player, in order
+var level_index := 0
 
 
 func _ready() -> void:
@@ -36,13 +47,30 @@ func law(id: String) -> Dictionary:
 	return laws.get(id, {})
 
 
-## Record a ticket and notify the level. Contrast is another law shown for comparison.
-func report(law_id: String, contrast_id := "", caption := "") -> void:
-	var l := law(law_id)
-	total_fine += int(l.get("fine", 0))
-	total_points += int(l.get("points", 0))
-	tickets.append(law_id)
-	violated.emit(law_id, contrast_id, caption)
+## Issue a ticket. Contrast is another law shown for comparison.
+func report(law_id: String, contrast_id := "", caption := "", charged := true) -> void:
+	if charged:
+		var l := law(law_id)
+		total_fine += int(l.get("fine", 0))
+		total_points += int(l.get("points", 0))
+		tickets.append(law_id)
+	violated.emit(law_id, contrast_id, caption, charged)
+
+
+func reset() -> void:
+	total_fine = 0
+	total_points = 0
+	tickets.clear()
+	level_index = 0
+
+
+func start_level(index: int) -> void:
+	level_index = index
+	get_tree().change_scene_to_file(LEVELS[index] if index < LEVELS.size() else SUMMARY)
+
+
+func next_level() -> void:
+	start_level(level_index + 1)
 
 
 func _load_laws() -> Dictionary:

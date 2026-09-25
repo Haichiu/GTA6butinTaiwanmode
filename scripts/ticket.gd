@@ -20,7 +20,7 @@ func _ready() -> void:
 	add_child(_flash)
 
 
-func show_ticket(law_id: String, contrast_id: String, caption: String) -> void:
+func show_ticket(law_id: String, contrast_id: String, caption: String, charged := true) -> void:
 	var l := Game.law(law_id)
 	_panel = PanelContainer.new()
 	var style := StyleBoxFlat.new()
@@ -35,7 +35,7 @@ func show_ticket(law_id: String, contrast_id: String, caption: String) -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 10)
 	_panel.add_child(box)
-	box.add_child(_label("交通違規罰單", 40, STAMP, true))
+	box.add_child(_label("交通違規罰單" if charged else "對方的罰單（不是你的）", 40, STAMP, true))
 	box.add_child(_label("違規事項：%s" % l["title"], 26, INK))
 	box.add_child(_label(l["article"], 18, INK.lightened(0.3)))
 	var points := "　記違規點數 %d 點" % l["points"] if int(l["points"]) > 0 else ""

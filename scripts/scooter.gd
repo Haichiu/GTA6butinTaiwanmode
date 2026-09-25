@@ -8,6 +8,8 @@ extends CharacterBody3D
 @export var coast_decel := 2.5
 @export var turn_rate := 2.0  # rad/s at full steering authority
 
+const PIVOT_RATE := 1.2  # rad/s when stopped
+
 var speed := 0.0
 var frozen := false
 
@@ -46,9 +48,11 @@ func _physics_process(delta: float) -> void:
 		speed = move_toward(speed, 0.0, coast_decel * delta)
 
 	var steer := Input.get_axis("steer_right", "steer_left")
-	# No turning on the spot; full authority from ~15 km/h.
+	# Full authority from ~15 km/h. At a standstill the rider can still shuffle the scooter
+	# around with their feet (slowly), which two-stage turns depend on.
 	var authority := clampf(speed / 4.0, 0.0, 1.0)
-	rotation.y += steer * turn_rate * authority * delta
+	var turn := maxf(turn_rate * authority, PIVOT_RATE)
+	rotation.y += steer * turn * delta
 
 	var forward := -global_transform.basis.z
 	velocity.x = forward.x * speed
