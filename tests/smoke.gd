@@ -137,7 +137,8 @@ func _cases() -> Array:
 			_expect_win(l)],
 
 		[7, "從分隔缺口騎上快速公路", func(l: LevelBase) -> void:
-			await _drive(l, [Vector3(11.25, 0, -90.0), Vector3(5.0, 0, -105.0)], 8.0)
+			# The post row squeezes the lane toward the gap; slip through the gap after it ends.
+			await _drive(l, [Vector3(11.2, 0, -95.0), Vector3(7.5, 0, -96.5), Vector3(4.0, 0, -100.0)], 4.0, 90.0, 1.5)
 			_expect_tickets(["expressway_scooter"])],
 		[7, "直直衝進改道彎：撞棒棒糖自摔", func(l: LevelBase) -> void:
 			await _drive(l, [Vector3(11.25, 0, -130.0)], 13.0, 20.0)

@@ -4,8 +4,11 @@ extends Node
 
 ## [level, file name, scooter position, yaw]; position null = spawn point.
 const SHOTS := [
-	[5, "l5_junction_b", Vector3(5.25, 0.1, -105.0), 0.0],
-	[7, "l7_cameras", Vector3(11.25, 0.1, -205.0), 0.0],
+	[1, "l1_street", Vector3(8.75, 0.1, -60.0), 0.0],
+	[3, "l3_street", Vector3(9.9, 0.1, 45.0), 0.0],
+	[7, "l7_bridge", null, 0.0],
+	[7, "l7_narrow", Vector3(11.4, 0.1, -70.0), 0.0],
+	[7, "l7_loop", Vector3(20.0, 0.1, -106.0), -PI / 2.0],
 ]
 
 
@@ -39,7 +42,7 @@ func _ready() -> void:
 			level.truck.global_position = Vector3(6.3, 0, -262.0)
 			level.truck.rotation.y = 0.0
 			level.truck.set_physics_process(false)
-		await _frames(150 if s[1] == "l1_uncle" else 30)
+		await _frames(150 if s[1] in ["l1_uncle", "l1_street", "l3_street"] else 30)
 		await _shot("%s/%s.png" % [out_dir, s[1]])
 		level.queue_free()
 		await _frames(2)

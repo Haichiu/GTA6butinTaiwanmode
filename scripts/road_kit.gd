@@ -160,6 +160,63 @@ static func line_posts(parent: Node3D, from: Vector2, to: Vector2, spacing := 1.
 		post(parent, from.lerp(to, float(i) / steps))
 
 
+## A long straight row of posts drawn as one MultiMesh (hundreds of posts stay cheap on the web),
+## with a single thin collider along the row in the "guardrail" group.
+static func post_row(parent: Node3D, from: Vector2, to: Vector2, spacing := 1.6) -> void:
+	var count := maxi(2, ceili(from.distance_to(to) / spacing) + 1)
+	var pole := BoxMesh.new()
+	pole.size = Vector3(0.08, 0.95, 0.08)
+	pole.material = material(WHITE)
+	var disc := CylinderMesh.new()
+	disc.top_radius = 0.16
+	disc.bottom_radius = 0.16
+	disc.height = 0.03
+	disc.material = material(RED)
+	for part in [[pole, Vector3(0, 0.475, 0), Basis()], [disc, Vector3(0, 1.05, 0), Basis(Vector3.RIGHT, PI / 2.0)]]:
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.mesh = part[0]
+		mm.instance_count = count
+		for i in count:
+			var p := from.lerp(to, float(i) / (count - 1))
+			mm.set_instance_transform(i, Transform3D(part[2], Vector3(p.x, 0, p.y) + part[1]))
+		var mmi := MultiMeshInstance3D.new()
+		mmi.multimesh = mm
+		parent.add_child(mmi)
+	var d := to - from
+	var body := StaticBody3D.new()
+	body.add_to_group("guardrail")
+	var shape := CollisionShape3D.new()
+	var b := BoxShape3D.new()
+	b.size = Vector3(0.2, 1.2, d.length())
+	shape.shape = b
+	body.add_child(shape)
+	body.position = Vector3((from.x + to.x) / 2.0, 0.6, (from.y + to.y) / 2.0)
+	body.rotation.y = atan2(d.x, d.y)
+	parent.add_child(body)
+
+
+## Dense green anti-glare slats (防眩板) along a straight line, one MultiMesh, no collision.
+static func glare_screen(parent: Node3D, from: Vector2, to: Vector2, spacing := 0.45) -> void:
+	var count := maxi(2, ceili(from.distance_to(to) / spacing) + 1)
+	var slat := BoxMesh.new()
+	slat.size = Vector3(0.05, 1.1, 0.28)
+	slat.material = material(Color(0.2, 0.55, 0.3))
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = slat
+	mm.instance_count = count
+	var d := to - from
+	var yaw := atan2(d.x, d.y) + 0.6  # slats angled against oncoming headlights
+	for i in count:
+		var p := from.lerp(to, float(i) / (count - 1))
+		mm.set_instance_transform(i, Transform3D(Basis(Vector3.UP, yaw), Vector3(p.x, 1.05, p.y)))
+	var mmi := MultiMeshInstance3D.new()
+	mmi.multimesh = mm
+	parent.add_child(mmi)
+	box(parent, Vector3(0.12, 0.5, d.length()), Vector3((from.x + to.x) / 2.0, 0.25, (from.y + to.y) / 2.0), Color(0.6, 0.6, 0.6)).rotation.y = atan2(d.x, d.y)
+
+
 ## Straight guardrail segment with collision.
 static func rail(parent: Node3D, from: Vector2, to: Vector2) -> void:
 	var d := to - from

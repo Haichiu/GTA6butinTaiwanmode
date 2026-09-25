@@ -70,6 +70,9 @@ func build() -> void:
 	for gz in [12.0, -2.0]:
 		K.ground_text(self, "機\n車\n↗", Vector2(5.25, gz), K.WHITE, 0.0, 0.007)
 	sign_board("我家", Vector3(HALF + 1.5, 0, -280.0), -PI / 2.0, Color(0.6, 0.4, 0.2), 2.5)
+	for sx in [-1, 1]:
+		K.surface(self, Vector2(minf(sx * HALF, sx * (HALF + 4.0)), 0.0), Vector2(maxf(sx * HALF, sx * (HALF + 4.0)), 60.0), K.SIDEWALK, 0.03)
+		StreetDressing.ns_side(self, sx * HALF, 60.0, 0.0, sx, 4.0)
 	buildings_ns(HALF + 12.0, 0.0, 60.0, -1)
 	buildings_ns(-HALF - 12.0, 0.0, 60.0, 1)
 	buildings_ns(HALF + 12.0, -300.0, BRIDGE_END - 15.0, -1)
@@ -86,6 +89,7 @@ func after_spawn() -> void:
 		var npc := NpcVehicle.make_custom(self, _cyclist(i), AABB(Vector3(-0.3, 0, -0.9), Vector3(0.6, 1.7, 1.8)),
 			[Vector3(8.3, 0, start_z), Vector3(8.3, 0, BRIDGE_END - 40.0)] as Array[Vector3], 4.5)
 		npc.target = scooter
+		npc.add_to_group("traffic")  # other scooters queue behind the cyclists too
 		npc.trigger_distance = 45.0
 		npc.touched.connect(func() -> void:
 			Game.sfx.play("bell")
@@ -111,3 +115,9 @@ func _add_rules() -> void:
 	traffic([Vector3(5.25, 0, 60.0), Vector3(5.25, 0, -300.0)] as Array[Vector3], 14.0, 3.0)
 	traffic([Vector3(1.75, 0, 60.0), Vector3(1.75, 0, -300.0)] as Array[Vector3], 15.0, 4.5, Callable(), 1.5)
 	traffic([Vector3(-5.25, 0, -300.0), Vector3(-5.25, 0, 60.0)] as Array[Vector3], 13.0, 4.0)
+	# Scooters funnel into the strip with you (and queue behind the cyclists); pedestrians on land.
+	traffic([Vector3(5.25, 0, 60.0), Vector3(5.25, 0, 10.0), Vector3(8.3, 0, BRIDGE_START - 2.0), Vector3(8.3, 0, BRIDGE_END + 2.0),
+		Vector3(5.25, 0, BRIDGE_END - 25.0), Vector3(5.25, 0, -300.0)] as Array[Vector3], 8.0, 4.0, Callable(), 3.0, Vector3.INF, Callable(), "scooter")
+	traffic([Vector3(-8.0, 0, -300.0), Vector3(-8.0, 0, 60.0)] as Array[Vector3], 11.0, 3.0, Callable(), 0.0, Vector3.INF, Callable(), "scooter")
+	for sx in [-1, 1]:
+		pedestrians_ns(sx * (HALF + 2.2), 60.0, 2.0, 3)
