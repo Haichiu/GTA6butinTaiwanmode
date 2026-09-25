@@ -51,11 +51,20 @@ func is_red(axis: String) -> bool:
 
 
 func _physics_process(delta: float) -> void:
-	remaining -= delta
-	if remaining <= 0.0:
+	advance(delta)
+	_refresh()
+
+
+## Consume `delta` seconds, stepping through as many phases as it spans (a long web-load hitch
+## must not leave the light in a state that should already be over).
+func advance(delta: float) -> void:
+	var cycle := 0.0
+	for d in durations().values():
+		cycle += d
+	remaining -= fmod(delta, cycle) if delta > cycle else delta
+	while remaining <= 0.0:
 		phase = ((phase + 1) % 6) as Phase
 		remaining += durations()[phase]
-	_refresh()
 
 
 ## A signal head on a pole at `pos` for traffic travelling in `travel_dir`;
