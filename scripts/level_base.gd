@@ -9,6 +9,7 @@ const CARS := "res://assets/kenney/cars/Models/GLB format/"
 const CITY := "res://assets/kenney/commercial/Models/GLB format/"
 ## Tolerance so brushing the curb line isn't a sidewalk ticket.
 const CURB := 0.3
+const TRAFFIC_MODELS := ["sedan", "taxi", "suv", "van", "hatchback-sports"]
 const BUILDINGS := ["building-a", "building-b", "building-c", "building-d", "building-e", "building-f", "building-g", "building-h"]
 
 var title := ""
@@ -39,6 +40,7 @@ var _building_i := 0
 var _elapsed := 0.0  # level time for the deadline, clamped per frame like the intro
 var _timer_label: Label
 var _intro_time := 0.0  # seconds the intro has been shown (clamped per frame, see _process)
+var _pending_darters: Array[NpcVehicle] = []
 
 
 func _ready() -> void:
@@ -58,6 +60,9 @@ func _ready() -> void:
 	_setup_hud()
 	Game.violated.connect(_on_violated)
 	after_spawn()
+	# Darters are created in build(), before the scooter exists; aim them now.
+	for d in _pending_darters:
+		d.target = scooter
 
 
 func build() -> void:
@@ -145,6 +150,113 @@ func goal(min_xz: Vector2, max_xz: Vector2) -> void:
 	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	tag.position = anchor + Vector3.UP * 2.4
 	add_child(tag)
+
+
+## Something darts across the road when the scooter gets within `trigger` meters.
+## kind: "uncle" (老阿伯 crossing slowly), "dog", "ball" (a ball, then a kid chasing it).
+## Hitting the person/animal ends the run with *their* ticket — the absurdity is how cheap it is.
+func darter(kind: String, from: Vector3, to: Vector3, trigger: float) -> void:
+	if not Game.ambient:
+		return
+	var path: Array[Vector3] = [from, to]
+	match kind:
+		"uncle":
+			# Steps out, then stops in the first lane he reaches to look around for a while.
+			var lane := from + (to - from).normalized() * 4.0
+			var uncle_path: Array[Vector3] = [from, lane, to]
+			var npc := NpcVehicle.make_custom(self, _person(Color(0.97, 0.97, 0.93), 0.95), AABB(Vector3(-0.3, 0, -0.2), Vector3(0.6, 1.8, 0.4)), uncle_path, 1.6)
+			npc.dwell = {1: 3.0}
+			_arm_darter(npc, trigger, func() -> void:
+				_hazard_hit("ped_jaywalk", "老阿伯擅自穿越車道，罰 500。\n撞到他的你，可能要面對過失傷害的刑事責任，加上民事賠償。"))
+		"dog":
+			var npc := NpcVehicle.make_custom(self, _dog(), AABB(Vector3(-0.2, 0, -0.45), Vector3(0.4, 0.6, 0.9)), path, 6.0)
+			_arm_darter(npc, trigger, func() -> void:
+				_hazard_hit("pet_owner", "狗主人放狗在馬路上跑，罰 300。\n你摔車、修車、看醫生，自己出。"))
+		"ball":
+			var ball := NpcVehicle.make_custom(self, _ball(), AABB(Vector3(-0.2, 0, -0.2), Vector3(0.4, 0.4, 0.4)), path, 5.0)
+			_arm_darter(ball, trigger, func() -> void: toast("一顆球從車底滾過去了……", 2.0))
+			var kid_path: Array[Vector3] = [from - (to - from).normalized() * 3.0, to]
+			var kid := NpcVehicle.make_custom(self, _person(Color(0.95, 0.75, 0.2), 0.6), AABB(Vector3(-0.2, 0, -0.15), Vector3(0.4, 1.1, 0.3)), kid_path, 3.0)
+			_arm_darter(kid, trigger + 4.0, func() -> void:
+				_hazard_hit("ped_play", "小孩在馬路上追球，罰 500（對，行人也會被罰）。\n撞到小孩的你，可能要面對過失傷害的刑事責任，加上民事賠償。"))
+
+
+func _arm_darter(npc: NpcVehicle, trigger: float, on_hit: Callable) -> void:
+	npc.yields = false
+	npc.trigger_distance = trigger
+	npc.free_at_end = false
+	_pending_darters.append(npc)
+	npc.touched.connect(on_hit)
+
+
+func _hazard_hit(law_id: String, caption: String) -> void:
+	if _ended:
+		return
+	Game.sfx.play("crash")
+	Game.report(law_id, "", caption, false)
+
+
+## Ordinary traffic: spawns a car at the start of `path` every `interval` seconds while `active`
+## (e.g. its light is green) and removes it at the end. Cars keep their distance from you;
+## running into one is an accident report (see _car_contact).
+func traffic(path: Array[Vector3], mps: float, interval: float, active := Callable(), first_delay := 0.0) -> void:
+	if not Game.ambient:
+		return
+	var timer := Timer.new()
+	timer.wait_time = interval
+	timer.autostart = false
+	add_child(timer)
+	var spawn := func() -> void:
+		if _ended or (active.is_valid() and not active.call()):
+			return
+		var car := NpcVehicle.make(self, CARS + TRAFFIC_MODELS[randi() % TRAFFIC_MODELS.size()] + ".glb", 4.4, path, mps)
+		car.target = scooter
+		car.free_at_end = true
+		car.touched.connect(func() -> void: _car_contact(car))
+	# The timer belongs to the level, so a restart can't fire it into a freed scene.
+	timer.timeout.connect(func() -> void:
+		timer.wait_time = interval
+		spawn.call())
+	timer.start(maxf(first_delay, 0.01))
+
+
+## Scooter touched an ordinary car. Hitting it from behind is a (zero-fine) rear-end report;
+## anything else is just a crash.
+func _car_contact(car: Node3D) -> void:
+	if _ended or scooter == null:
+		return
+	var forward := -scooter.global_transform.basis.z
+	var to_car := car.global_position - scooter.global_position
+	to_car.y = 0.0
+	Game.sfx.play("crash")
+	if to_car.length() > 0.01 and forward.dot(to_car.normalized()) > 0.5 and scooter.speed > 1.0:
+		Game.report("rear_end", "car_speeding",
+			"一般道路追撞前車：處罰條例找不到罰鍰，0 元。\n但修車、保險、跟對方喬，全部自己來。同樣的事在國道罰 3,000 起。")
+	else:
+		fail("跟汽車擦撞了。")
+
+
+func _dog() -> Node3D:
+	var root := Node3D.new()
+	var fur := Color(0.7, 0.5, 0.25)
+	K.box(root, Vector3(0.3, 0.3, 0.7), Vector3(0, 0.4, 0), fur)
+	K.box(root, Vector3(0.25, 0.25, 0.3), Vector3(0, 0.6, 0.4), fur)
+	for p in [Vector2(-0.1, -0.25), Vector2(0.1, -0.25), Vector2(-0.1, 0.25), Vector2(0.1, 0.25)]:
+		K.box(root, Vector3(0.08, 0.3, 0.08), Vector3(p.x, 0.15, p.y), fur.darkened(0.3))
+	return root
+
+
+func _ball() -> Node3D:
+	var mi := MeshInstance3D.new()
+	var sphere := SphereMesh.new()
+	sphere.radius = 0.2
+	sphere.height = 0.4
+	sphere.material = K.material(Color(0.95, 0.3, 0.2))
+	mi.mesh = sphere
+	mi.position.y = 0.2
+	var root := Node3D.new()
+	root.add_child(mi)
+	return root
 
 
 ## A simple standing figure (someone waiting, a pedestrian...). Faces +Z.

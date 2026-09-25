@@ -94,6 +94,11 @@ func _add_rules() -> void:
 	ViolationZone.make(self, Vector2(HALF + CURB, 14.0), Vector2(HALF + WALK, 80.0), "sidewalk")
 	ViolationZone.make(self, Vector2(-HALF - WALK, -200.0), Vector2(-HALF - CURB, 80.0), "sidewalk")
 	goal(Vector2(7.0, -160.0), Vector2(HALF, -150.0))
+	# Cars may use the inner lanes you may not.
+	traffic([Vector3(5.25, 0, 90.0), Vector3(5.25, 0, -200.0)] as Array[Vector3], 11.0, 4.5)
+	traffic([Vector3(1.75, 0, 90.0), Vector3(1.75, 0, -200.0)] as Array[Vector3], 12.0, 6.0, Callable(), 2.5)
+	traffic([Vector3(-5.25, 0, -200.0), Vector3(-5.25, 0, 90.0)] as Array[Vector3], 12.0, 5.0)
+	darter("dog", Vector3(36.0, 0, 11.0), Vector3(36.0, 0, -11.0), 22.0)
 	# Once you give up and turn right, the GPS "helpfully" reroutes.
 	on_enter(Vector2(HALF + 4.0, 0.0), Vector2(HALF + 10.0, A_HALF), func() -> void:
 		gps = [Vector3(B_X + 2.0, 0, -3.0), Vector3(B_X + 2.0, 0, C_Z - 2.0), Vector3(HALF + 2.0, 0, C_Z - 2.0), Vector3(8.75, 0, -155.0)]

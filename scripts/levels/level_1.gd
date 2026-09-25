@@ -53,4 +53,8 @@ func build() -> void:
 		"騎上人行道閃違停，跟騎進空的內側車道，罰一樣多。")
 	ViolationZone.make(self, Vector2(-HALF - WALK, Z_END), Vector2(-HALF - CURB, Z_START), "sidewalk")
 	goal(Vector2(7.0, -300.0), Vector2(HALF, -290.0))
+	# 老阿伯 steps out between the parked truck and delivery van.
+	darter("uncle", Vector3(12.5, 0, -152.0), Vector3(-12.0, 0, -152.0), 42.0)
+	traffic([Vector3(-5.25, 0, Z_END), Vector3(-5.25, 0, Z_START + 20.0)] as Array[Vector3], 12.0, 4.0)
+	traffic([Vector3(-1.75, 0, Z_END), Vector3(-1.75, 0, Z_START + 20.0)] as Array[Vector3], 13.0, 6.5, Callable(), 2.0)
 	gps = [Vector3(8.75, 0, -295.0)]
