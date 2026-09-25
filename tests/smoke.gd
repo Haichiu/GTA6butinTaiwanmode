@@ -4,6 +4,8 @@ extends Node
 ## Each case loads a level, then either teleports the scooter into a trap or drives the legal
 ## route with a simple autopilot. Exits 0 when every case passes, 1 otherwise.
 
+const K = preload("res://scripts/road_kit.gd")
+
 var _failures := 0
 var _checks := 0  # expectations evaluated in the current case
 var _level: LevelBase
@@ -125,27 +127,27 @@ func _cases() -> Array:
 			await _drive(l, [Vector3(5.25, 0, 0), Vector3(8.3, 0, -20), Vector3(8.3, 0, -188), Vector3(5.25, 0, -210), Vector3(5.25, 0, -284)], 3.2, 150.0)
 			_expect_win(l)],
 
-		[7, "從護欄缺口騎上快速公路", func(l: LevelBase) -> void:
-			await _drive(l, [Vector3(11.25, 0, -90.0), Vector3(5.0, 0, -110.0)], 8.0)
+		[7, "從分隔缺口騎上快速公路", func(l: LevelBase) -> void:
+			await _drive(l, [Vector3(11.25, 0, -90.0), Vector3(5.0, 0, -105.0)], 8.0)
 			_expect_tickets(["expressway_scooter"])],
-		[7, "直線衝進髮夾彎：自摔", func(l: LevelBase) -> void:
-			await _drive(l, [Vector3(11.25, 0, -140.0)], 13.0, 20.0)
+		[7, "直直衝進改道彎：撞棒棒糖自摔", func(l: LevelBase) -> void:
+			await _drive(l, [Vector3(11.25, 0, -130.0)], 13.0, 20.0)
 			_checks += 1
 			if not (l._ended and not l._won and Game.tickets.is_empty()):
-				_fail("expected a crash into the hairpin guardrail (ended=%s)" % l._ended)],
-		[7, "合法路線：慢慢過兩個髮夾彎", func(l: LevelBase) -> void:
-			var pts := [Vector3(11.25, 0, -110.0)]
-			for i in range(1, 9):
-				var a := PI + PI * i / 8.0
-				pts.append(Vector3(17.0 + cos(a) * 5.75, 0, -120.0 + sin(a) * 5.75))
-			pts.append(Vector3(22.75, 0, -85.0))
-			for i in range(1, 9):
-				var a := PI - PI * i / 8.0
-				pts.append(Vector3(28.5 + cos(a) * 5.75, 0, -80.0 + sin(a) * 5.75))
-			pts.append(Vector3(34.25, 0, -294.0))
+				_fail("expected a crash into the posts (ended=%s)" % l._ended)],
+		[7, "合法路線：繞一圈棒棒糖回到原路", func(l: LevelBase) -> void:
+			var pts := [Vector3(11.25, 0, -95.0)]
+			for piece in l._pieces():
+				if piece[0] == "arc":
+					for i in range(1, 7):
+						var a: float = lerpf(piece[3], piece[4], i / 6.0)
+						var p := K.on_arc(piece[1], piece[2], a)
+						pts.append(Vector3(p.x, 0, p.y))
+				else:
+					pts.append(Vector3(piece[2].x, 0, piece[2].y))
 			await _drive(l, pts.slice(0, 1), 9.0)
-			await _drive(l, pts.slice(1, pts.size() - 1), 3.5, 90.0, 1.5)
-			await _drive(l, pts.slice(pts.size() - 1), 9.0)
+			await _drive(l, pts.slice(1), 3.5, 90.0, 1.2)
+			await _drive(l, [Vector3(11.25, 0, -229.0)], 9.0)
 			_expect_win(l)],
 		[3, "待轉時停在格子外面", func(l: LevelBase) -> void:
 			await _teleport_expect(l, Vector3(9.0, 0.1, -3.0), PI / 2.0, [], 0.0)

@@ -15,7 +15,8 @@ func _ready() -> void:
 	await _shot(out_dir + "/title.png")
 	# Pretend a run happened, then advance past the last level.
 	Game.reset()
-	for id in ["lane_ban", "turn_lane_straight", "two_stage_left", "red_light", "two_stage_right", "lane_ban", "highway_scooter"]:
+	for id in ["lane_ban", "turn_lane_straight", "two_stage_left", "red_light", "two_stage_right", "lane_ban", "wait_outside_box",
+			"no_left_turn", "uturn_double_yellow", "crosswalk_stop", "stop_line", "expressway_scooter", "rear_end", "sidewalk"]:
 		Game.report(id)
 	Game.level_index = Game.LEVELS.size() - 1
 	Game.next_level()

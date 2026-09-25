@@ -4,13 +4,10 @@ extends Node
 
 ## [level, file name, scooter position, yaw]; position null = spawn point.
 const SHOTS := [
-	[1, "l1_truck", Vector3(9.8, 0.1, -240.0), 0.0],
-	[3, "l3_waitbox", Vector3(12.8, 0.1, -5.4), PI / 2.0],
-	[6, "l6_exit", Vector3(8.3, 0.1, -198.0), 0.0],
 	[7, "l7_start", null, 0.0],
-	[7, "l7_hairpin", Vector3(11.25, 0.1, -102.0), 0.0],
-	[7, "l7_hairpin2", Vector3(22.75, 0.1, -95.0), PI],
-	[7, "l7_ticket", Vector3(4.0, 0.1, -110.0), 0.0, "expressway_scooter"],
+	[7, "l7_detour", Vector3(11.25, 0.1, -80.0), 0.0],
+	[7, "l7_hairpin", Vector3(20.0, 0.1, -106.0), -PI / 2.0],
+	[7, "l7_back", Vector3(11.25, 0.1, -128.0), 0.0],
 ]
 
 
