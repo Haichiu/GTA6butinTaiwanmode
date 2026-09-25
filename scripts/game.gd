@@ -28,6 +28,7 @@ var total_fine := 0
 var total_points := 0
 var tickets: Array[String] = []  # law ids charged to the player, in order
 var level_index := 0
+var sfx: Sfx
 
 
 func _ready() -> void:
@@ -36,10 +37,17 @@ func _ready() -> void:
 		if not InputMap.has_action(action):
 			InputMap.add_action(action)
 		for keycode in KEYS[action]:
-			var ev := InputEventKey.new()
-			ev.physical_keycode = keycode
-			InputMap.action_add_event(action, ev)
+			# Register by physical position and by logical key: browsers don't always report both.
+			var physical := InputEventKey.new()
+			physical.physical_keycode = keycode
+			InputMap.action_add_event(action, physical)
+			var logical := InputEventKey.new()
+			logical.keycode = keycode
+			InputMap.action_add_event(action, logical)
 	laws = _load_laws()
+	# Owned here rather than a second autoload, so project.godot needs no edits while the editor is open.
+	sfx = Sfx.new()
+	add_child(sfx)
 
 
 func law(id: String) -> Dictionary:

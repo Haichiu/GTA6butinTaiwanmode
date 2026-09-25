@@ -7,6 +7,7 @@
 - 執行：`godot --path .`
 - 測試：`tests/run.sh`（全部關卡，約 10 秒）或 `tests/run.sh 3 5`（指定關卡）
 - 截圖：`godot --path . res://tests/shot.tscn -- <輸出資料夾>`
+- 網頁版：`godot --headless --path . --export-release "Web" build/web/index.html`，本機測試用 `python3 -m http.server 8060 --directory build/web`
 - 規劃：[docs/plan.md](docs/plan.md)
 
 ## 素材授權

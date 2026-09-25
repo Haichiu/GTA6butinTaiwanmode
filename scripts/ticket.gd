@@ -64,6 +64,8 @@ func show_ticket(law_id: String, contrast_id: String, caption: String, charged :
 	_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
 
+	Game.sfx.play("siren", -6.0)
+	Game.sfx.play("stamp", 0.0, 0.45)
 	# Red flash, then the ticket slides up from below.
 	_flash.color.a = 0.55
 	var tw := create_tween()
@@ -78,7 +80,7 @@ func show_ticket(law_id: String, contrast_id: String, caption: String, charged :
 func _label(text: String, size: int, color: Color, bold := false) -> Label:
 	var label := Label.new()
 	label.text = text
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY  # CJK: break anywhere
 	# Fixed width: autowrap labels with zero width report absurd heights during layout.
 	label.custom_minimum_size.x = TEXT_WIDTH
 	label.add_theme_font_size_override("font_size", size)

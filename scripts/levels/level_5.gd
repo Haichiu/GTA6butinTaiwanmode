@@ -70,7 +70,9 @@ func after_spawn() -> void:
 			[Vector3(8.3, 0, start_z), Vector3(8.3, 0, BRIDGE_END - 40.0)] as Array[Vector3], 4.5)
 		npc.target = scooter
 		npc.trigger_distance = 45.0
-		npc.touched.connect(func() -> void: toast("腳踏車：叮叮！（橋上就這麼一條，你也只能跟著。）", 2.5))
+		npc.touched.connect(func() -> void:
+			Game.sfx.play("bell")
+			toast("腳踏車：叮叮！（橋上就這麼一條，你也只能跟著。）", 2.5))
 
 
 func _cyclist(i: int) -> Node3D:
