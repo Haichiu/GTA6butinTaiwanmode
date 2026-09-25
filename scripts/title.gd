@@ -16,7 +16,7 @@ func _ready() -> void:
 	add_child(box)
 	box.add_child(_label("GTA6 but in Taiwan mode", 64, Color(1, 0.85, 0.3), true))
 	box.add_child(_label("你來騎騎看。", 30, Color.WHITE))
-	box.add_child(_label("方向鍵／WASD 騎車　R／Enter／空白鍵 重來", 22, Color(0.75, 0.75, 0.75)))
+	box.add_child(_label("方向鍵／WASD 騎車　隨時按 R 重來", 22, Color(0.75, 0.75, 0.75)))
 	box.add_child(_label("按空白鍵開始", 28, Color(0.7, 0.9, 1.0)))
 	_gm_hint = _label("", 20, Color(1, 0.85, 0.3))
 	box.add_child(_gm_hint)

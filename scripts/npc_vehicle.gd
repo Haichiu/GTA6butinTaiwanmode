@@ -17,6 +17,10 @@ var hold := false
 var yields := true
 ## Remove the vehicle when it reaches the end of its path (traffic streams).
 var free_at_end := false
+## Signal-controlled traffic: stop short of `stop_point` while `can_go` returns false.
+var stop_point := Vector3.INF
+var can_go := Callable()
+
 ## Seconds to stand still on arriving at a waypoint index (e.g. 老阿伯 stopping mid-lane).
 var dwell := {}
 
@@ -85,6 +89,8 @@ func _physics_process(delta: float) -> void:
 	var to_goal := goal - global_position
 	if yields and _blocked_by_target(to_goal):
 		return
+	if _held_at_stop_line(to_goal):
+		return
 	var step := speed * delta
 	if to_goal.length() <= step:
 		global_position = goal
@@ -103,16 +109,33 @@ func _physics_process(delta: float) -> void:
 		global_position += to_goal.normalized() * step
 
 
-## Is the scooter just ahead of us along our direction of travel?
+## Is the scooter (or another car in the same stream) just ahead of us?
 func _blocked_by_target(to_goal: Vector3) -> bool:
-	if target == null or to_goal.length() < 0.01:
+	if to_goal.length() < 0.01:
 		return false
 	var dir := Vector3(to_goal.x, 0, to_goal.z).normalized()
-	var rel := target.global_position - global_position
+	if target != null and _just_ahead(target.global_position, dir, 9.0):
+		return true
+	for other in get_tree().get_nodes_in_group("traffic"):
+		if other != self and _just_ahead((other as Node3D).global_position, dir, 7.5):
+			return true
+	return false
+
+
+func _just_ahead(pos: Vector3, dir: Vector3, gap: float) -> bool:
+	var rel := pos - global_position
 	rel.y = 0.0
 	var ahead := rel.dot(dir)
-	var lateral := (rel - dir * ahead).length()
-	return ahead > 0.0 and ahead < 9.0 and lateral < 1.8
+	return ahead > 0.0 and ahead < gap and (rel - dir * ahead).length() < 1.8
+
+
+## Red light ahead and we haven't reached the line yet: wait with our nose at the line.
+func _held_at_stop_line(to_goal: Vector3) -> bool:
+	if stop_point == Vector3.INF or not can_go.is_valid() or can_go.call():
+		return false
+	var dir := Vector3(to_goal.x, 0, to_goal.z).normalized()
+	var ahead := (stop_point - global_position).dot(dir)
+	return ahead > 0.0 and ahead < 3.2  # ~half a car length: stop with the front at the line
 
 
 func _face(dir: Vector3) -> void:

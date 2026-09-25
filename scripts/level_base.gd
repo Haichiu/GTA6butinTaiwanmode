@@ -9,6 +9,7 @@ const CARS := "res://assets/kenney/cars/Models/GLB format/"
 const CITY := "res://assets/kenney/commercial/Models/GLB format/"
 ## Tolerance so brushing the curb line isn't a sidewalk ticket.
 const CURB := 0.3
+const WORLD_EDGE := 580.0  # the ground plane is ±600 m
 const TRAFFIC_MODELS := ["sedan", "taxi", "suv", "van", "hatchback-sports"]
 const BUILDINGS := ["building-a", "building-b", "building-c", "building-d", "building-e", "building-f", "building-g", "building-h"]
 
@@ -83,6 +84,10 @@ func _process(delta: float) -> void:
 	_speed_label.text = "%d km/h" % roundi(scooter.speed_kmh())
 	_fine_label.text = "今日罰款 NT$ %s" % Ticket._money(Game.total_fine)
 	_gm_label.visible = Game.gm
+	# Ridden off the edge of the world: end the run instead of falling forever.
+	if not _ended and scooter != null and (scooter.global_position.y < -3.0
+			or absf(scooter.global_position.x) > WORLD_EDGE or absf(scooter.global_position.z) > WORLD_EDGE):
+		_off_map()
 	if not _ended:
 		_elapsed += minf(delta, 0.1)
 	if deadline > 0.0:
@@ -98,6 +103,11 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	# R restarts the level at any time (not Space/Enter: too easy to hit by accident mid-ride).
+	var key := event as InputEventKey
+	if key != null and key.pressed and not key.echo and key.physical_keycode == KEY_R and not _ended:
+		get_tree().reload_current_scene()
+		return
 	if _can_continue and event.is_action_pressed("restart"):
 		if _won:
 			Game.next_level()
@@ -201,12 +211,12 @@ func _hazard_hit(law_id: String, caption: String) -> void:
 ## Ordinary traffic: spawns a car at the start of `path` every `interval` seconds while `active`
 ## (e.g. its light is green) and removes it at the end. Cars keep their distance from you;
 ## running into one is an accident report (see _car_contact).
-func traffic(path: Array[Vector3], mps: float, interval: float, active := Callable(), first_delay := 0.0) -> void:
+func traffic(path: Array[Vector3], mps: float, interval: float, active := Callable(), first_delay := 0.0,
+		stop_at := Vector3.INF, go := Callable()) -> void:
 	if not Game.ambient:
 		return
 	var timer := Timer.new()
 	timer.wait_time = interval
-	timer.autostart = false
 	add_child(timer)
 	var spawn := func() -> void:
 		if _ended or (active.is_valid() and not active.call()):
@@ -214,12 +224,20 @@ func traffic(path: Array[Vector3], mps: float, interval: float, active := Callab
 		var car := NpcVehicle.make(self, CARS + TRAFFIC_MODELS[randi() % TRAFFIC_MODELS.size()] + ".glb", 4.4, path, mps)
 		car.target = scooter
 		car.free_at_end = true
+		car.stop_point = stop_at
+		car.can_go = go
+		car.add_to_group("traffic")
 		car.touched.connect(func() -> void: _car_contact(car))
-	# The timer belongs to the level, so a restart can't fire it into a freed scene.
-	timer.timeout.connect(func() -> void:
-		timer.wait_time = interval
-		spawn.call())
-	timer.start(maxf(first_delay, 0.01))
+	# Timers belong to the level, so a restart can't fire them into a freed scene. A separate
+	# one-shot handles the first car; reusing one timer for both double-spawned the first car.
+	timer.timeout.connect(spawn)
+	var first := Timer.new()
+	first.one_shot = true
+	add_child(first)
+	first.timeout.connect(func() -> void:
+		spawn.call()
+		timer.start())
+	first.start(maxf(first_delay, 0.01))
 
 
 ## Scooter touched an ordinary car. Hitting it from behind is a (zero-fine) rear-end report;
@@ -331,6 +349,12 @@ func _end() -> void:
 	_intro.visible = false
 	# Short grace period so a held key doesn't skip the ticket instantly.
 	get_tree().create_timer(0.6).timeout.connect(func() -> void: _can_continue = true)
+
+
+func _off_map() -> void:
+	Game.sfx.play("crash")
+	_end()  # even in GM mode: there's nothing to ride back to
+	_show_message("騎出地圖了。\n按空白鍵重來")
 
 
 ## Transient notice in the top-left (reuses the intro label).

@@ -164,7 +164,33 @@ func _cases() -> Array:
 			if l._ended or l.scooter.frozen:
 				_fail("GM mode should keep the level running")],
 
+		[1, "騎出地圖邊界：結束關卡而不是無限墜落 (#6)", func(l: LevelBase) -> void:
+			_teleport(l, Vector3(8.75, 0.1, 560.0), PI)
+			await _drive(l, [Vector3(8.75, 0, 640.0)], 14.0, 20.0)
+			_checks += 1
+			if not (l._ended and not l._won):
+				_fail("riding off the map should end the level (pos=%s)" % l.scooter.global_position)],
+		[3, "紅綠燈卡頓 5 秒：一次補完所有階段 (#3)", func(l: LevelBase) -> void:
+			l.sig.setup(TrafficSignal.Phase.NS_GO, 1.0)
+			l.sig.advance(5.0)
+			_checks += 1
+			if not (l.sig.phase == TrafficSignal.Phase.EW_GO and absf(l.sig.remaining - 9.0) < 0.01):
+				_fail("expected EW_GO with 9 s left, got phase %d with %.2f" % [l.sig.phase, l.sig.remaining])],
+
 		# --- Hazards and traffic (ambient on) ---
+		[3, "紅燈時車流停在停止線前 (#4)", func(l: LevelBase) -> void:
+			l.sig.setup(TrafficSignal.Phase.EW_GO, 60.0)
+			await _frames(600)
+			var crossed := []
+			var waiting := 0
+			for n in l.find_children("*", "NpcVehicle", true, false):
+				if n.is_in_group("traffic") and absf(n.global_position.x - 5.25) < 0.5:
+					waiting += 1
+					if n.global_position.z < 11.5:
+						crossed.append(n.global_position)
+			_checks += 1
+			if waiting == 0 or not crossed.is_empty():
+				_fail("northbound cars should queue behind the stop line (waiting=%d crossed=%s)" % [waiting, crossed]), "ambient"],
 		[1, "聯結車跨雙黃線衝過來：沒閃被撞（對方的罰單）", func(l: LevelBase) -> void:
 			_teleport(l, Vector3(7.7, 0.1, -190.0), 0.0)
 			await _drive(l, [Vector3(7.7, 0, -296.0)], 10.0, 30.0)
