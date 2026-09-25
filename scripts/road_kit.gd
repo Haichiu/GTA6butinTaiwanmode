@@ -111,6 +111,55 @@ static func arc_rail(parent: Node3D, center: Vector2, radius: float, a0: float, 
 		rail(parent, p0, p1)
 
 
+## Delineator post (a.k.a. 「棒棒糖」): thin pole with a round reflector disc on top.
+## Solid, and in the "guardrail" group so hitting one fast counts as a crash.
+static func post(parent: Node3D, pos: Vector2) -> void:
+	var body := StaticBody3D.new()
+	body.position = Vector3(pos.x, 0, pos.y)
+	body.add_to_group("guardrail")
+	box(body, Vector3(0.08, 0.95, 0.08), Vector3(0, 0.475, 0), WHITE)
+	var disc := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.16
+	cyl.bottom_radius = 0.16
+	cyl.height = 0.03
+	cyl.material = material(RED)
+	disc.mesh = cyl
+	disc.rotation.x = PI / 2.0
+	disc.position = Vector3(0, 1.05, 0)
+	body.add_child(disc)
+	var dot := MeshInstance3D.new()
+	var inner := CylinderMesh.new()
+	inner.top_radius = 0.07
+	inner.bottom_radius = 0.07
+	inner.height = 0.035
+	inner.material = material(WHITE)
+	dot.mesh = inner
+	dot.rotation.x = PI / 2.0
+	dot.position = Vector3(0, 1.05, 0)
+	body.add_child(dot)
+	var shape := CollisionShape3D.new()
+	var b := BoxShape3D.new()
+	b.size = Vector3(0.2, 1.2, 0.2)
+	shape.shape = b
+	shape.position.y = 0.6
+	body.add_child(shape)
+	parent.add_child(body)
+
+
+## Posts along an arc / a straight line, `spacing` meters apart.
+static func arc_posts(parent: Node3D, center: Vector2, radius: float, a0: float, a1: float, spacing := 1.6) -> void:
+	var steps := maxi(2, ceili(absf(a1 - a0) * radius / spacing))
+	for i in steps + 1:
+		post(parent, on_arc(center, radius, lerpf(a0, a1, float(i) / steps)))
+
+
+static func line_posts(parent: Node3D, from: Vector2, to: Vector2, spacing := 1.6) -> void:
+	var steps := maxi(1, ceili(from.distance_to(to) / spacing))
+	for i in steps + 1:
+		post(parent, from.lerp(to, float(i) / steps))
+
+
 ## Straight guardrail segment with collision.
 static func rail(parent: Node3D, from: Vector2, to: Vector2) -> void:
 	var d := to - from
