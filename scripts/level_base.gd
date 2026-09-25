@@ -28,6 +28,7 @@ var _ended := false
 var _won := false
 var _can_continue := false
 var _building_i := 0
+var _intro_time := 0.0  # seconds the intro has been shown (clamped per frame, see _process)
 
 
 func _ready() -> void:
@@ -62,10 +63,15 @@ func spawn_transform() -> Transform3D:
 	return Transform3D.IDENTITY
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	_speed_label.text = "%d km/h" % roundi(scooter.speed_kmh())
 	_fine_label.text = "今日罰款 NT$ %s" % Ticket._money(Game.total_fine)
 	_update_arrow()
+	# Fade the intro after 6 s of *play*. Clamping delta matters on the web, where the first
+	# frame after a slow level load can report several seconds at once.
+	_intro_time += minf(delta, 0.1)
+	if _intro_time > 6.0 and _intro_time < 7.5 and _intro.text.begins_with("第"):
+		_intro.modulate.a = clampf(1.0 - (_intro_time - 6.0), 0.0, 1.0)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -107,6 +113,7 @@ func goal(min_xz: Vector2, max_xz: Vector2) -> void:
 
 
 func win() -> void:
+	Game.sfx.play("win")
 	_won = true
 	_end()
 	_show_message("抵達目的地！\n按空白鍵前往下一關")
@@ -116,6 +123,7 @@ func win() -> void:
 func fail(text: String) -> void:
 	if _ended:
 		return
+	Game.sfx.play("crash")
 	_end()
 	_show_message(text + "\n按空白鍵重來")
 
@@ -376,12 +384,9 @@ func _setup_hud() -> void:
 	_intro = _hud_label(30)
 	_intro.position = Vector2(24, 20)
 	_intro.size = Vector2(840, 120)
-	_intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_intro.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY  # CJK text: break anywhere, not at spaces
 	_intro.text = "第 %d 關：%s\n%s" % [Game.level_index + 1, title, objective]
 	layer.add_child(_intro)
-	var tw := create_tween()
-	tw.tween_interval(6.0)
-	tw.tween_property(_intro, "modulate:a", 0.0, 1.0)
 
 
 func _hud_label(size: int) -> Label:

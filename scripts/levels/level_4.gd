@@ -115,3 +115,4 @@ func _physics_process(delta: float) -> void:
 		_rush_timer += delta
 		if _rush_timer > 1.2:
 			rusher.hold = false
+			Game.sfx.play("horn")

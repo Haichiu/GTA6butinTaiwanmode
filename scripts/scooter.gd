@@ -15,6 +15,7 @@ var frozen := false
 
 var _visual: Node3D
 var _lean := 0.0
+var _engine: AudioStreamPlayer
 
 
 func _ready() -> void:
@@ -29,6 +30,11 @@ func _ready() -> void:
 	_visual = _build_visual()
 	add_child(_visual)
 	floor_snap_length = 0.3
+	_engine = AudioStreamPlayer.new()
+	_engine.stream = Game.sfx.streams["engine"]
+	_engine.volume_db = -10.0
+	add_child(_engine)
+	_engine.play()
 
 
 func speed_kmh() -> float:
@@ -37,7 +43,9 @@ func speed_kmh() -> float:
 
 func _physics_process(delta: float) -> void:
 	if frozen:
+		_engine.stream_paused = true
 		return
+	_engine.pitch_scale = 0.7 + 1.8 * speed / max_speed
 	var throttle := Input.get_action_strength("accelerate")
 	var braking := Input.get_action_strength("brake")
 	if braking > 0.0:

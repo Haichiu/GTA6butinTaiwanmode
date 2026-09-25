@@ -65,4 +65,5 @@ func _physics_process(_delta: float) -> void:
 			"前輪壓過停止線 900＝一台汽車整台停在機車停等區 900。")
 	elif along + NOSE > 0.0 and not _warned:
 		_warned = true
+		Game.sfx.play("whistle")
 		level.toast("警察：車頭凸出停止線，但輪子沒過線，勸導一次。")

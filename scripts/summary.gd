@@ -44,7 +44,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _label(text: String, size: int, color: Color, bold := false) -> Label:
 	var label := Label.new()
 	label.text = text
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY  # CJK: break anywhere
 	label.custom_minimum_size.x = 1000
 	label.add_theme_font_size_override("font_size", size)
 	label.add_theme_color_override("font_color", color)

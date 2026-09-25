@@ -87,5 +87,6 @@ func _on_truck_hit() -> void:
 	if _ended:
 		return
 	truck_hit = true
+	Game.sfx.play("crash")
 	Game.report("oncoming_truck", "highway_scooter",
 		"撞到你的聯結車跨雙黃線逆向：只開跨雙黃線的話，罰 1,400。\n你剛剛如果騎上國道：罰 4,000。", false)
