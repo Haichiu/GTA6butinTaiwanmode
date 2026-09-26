@@ -18,6 +18,9 @@ var speed := 0.0
 var frozen := false
 ## Steering authority multiplier: < 1 on gravel, where the front wheel washes out.
 var grip := 1.0
+## Road roughness 0..1: potholes and ruts knock the bars around (random yaw) and shake the ride.
+var bump := 0.0
+var _bump_phase := 0.0
 
 var _visual: Node3D
 var _lean := 0.0
@@ -68,6 +71,11 @@ func _physics_process(delta: float) -> void:
 	var authority := clampf(speed / 4.0, 0.0, 1.0)
 	var turn := maxf(turn_rate * authority, PIVOT_RATE) * grip
 	rotation.y += steer * turn * delta
+	if bump > 0.0 and speed > 1.0:
+		# Ruts yank the front wheel; worse the faster you go.
+		_bump_phase += delta * (4.0 + speed)
+		var kick := sin(_bump_phase * 2.3) * 0.6 + sin(_bump_phase * 5.1) * 0.4
+		rotation.y += kick * bump * 0.5 * clampf(speed / 8.0, 0.0, 1.5) * delta
 
 	var forward := -global_transform.basis.z
 	velocity.x = forward.x * speed
@@ -95,6 +103,7 @@ func _physics_process(delta: float) -> void:
 
 	_lean = lerpf(_lean, steer * 0.3 * authority, 8.0 * delta)
 	_visual.rotation.z = _lean
+	_visual.position.y = (sin(_bump_phase * 9.0) * 0.04 * bump) if speed > 1.0 else 0.0
 
 
 func _build_visual() -> Node3D:

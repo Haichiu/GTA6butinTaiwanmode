@@ -139,17 +139,19 @@ func _cases() -> Array:
 			await _drive(l, [Vector3(5.25, 0, 0), Vector3(8.3, 0, -20), Vector3(8.3, 0, -188), Vector3(5.25, 0, -210), Vector3(5.25, 0, -284)], 3.2, 150.0)
 			_expect_win(l)],
 
-		[7, "從分隔缺口騎上快速公路", func(l: LevelBase) -> void:
-			# The post row squeezes the lane toward the gap; slip through the gap after it ends.
-			await _drive(l, [Vector3(11.2, 0, -95.0), Vector3(7.5, 0, -96.5), Vector3(4.0, 0, -100.0)], 4.0, 90.0, 1.5)
+		[7, "上橋後外側車道突然禁行機車", func(l: LevelBase) -> void:
+			await _drive(l, [Vector3(8.2, 0, 40.0), Vector3(8.2, 0, -10.0)], 7.0)
+			_expect_tickets(["lane_ban"])],
+		[7, "被棒棒糖擠到受不了，騎上快速公路主線", func(l: LevelBase) -> void:
+			await _drive(l, [Vector3(5.0, 0, 35.0), Vector3(5.0, 0, -10.0)], 7.0)
 			_expect_tickets(["expressway_scooter"])],
 		[7, "直直衝進改道彎：撞棒棒糖自摔", func(l: LevelBase) -> void:
-			await _drive(l, [Vector3(11.25, 0, -130.0)], 13.0, 20.0)
+			await _drive(l, [Vector3(10.0, 0, -130.0)], 13.0, 20.0)
 			_checks += 1
 			if not (l._ended and not l._won and Game.tickets.is_empty()):
 				_fail("expected a crash into the posts (ended=%s)" % l._ended)],
-		[7, "合法路線：繞一圈棒棒糖回到原路", func(l: LevelBase) -> void:
-			var pts := [Vector3(11.25, 0, -95.0)]
+		[7, "合法路線：窄縫裡顛到底，繞一圈棒棒糖回到原路", func(l: LevelBase) -> void:
+			var pts := [Vector3(10.0, 0, -95.0)]
 			for piece in l._pieces():
 				if piece[0] == "arc":
 					for i in range(1, 7):
@@ -158,15 +160,18 @@ func _cases() -> Array:
 						pts.append(Vector3(p.x, 0, p.y))
 				else:
 					pts.append(Vector3(piece[2].x, 0, piece[2].y))
-			await _drive(l, pts.slice(0, 1), 9.0)
-			await _drive(l, pts.slice(1), 3.5, 90.0, 1.2)
-			await _drive(l, [Vector3(11.25, 0, -499.0)], 9.0, 120.0)  # 32 km/h: under every limit
+			await _drive(l, pts.slice(0, 1), 8.0)
+			_checks += 1
+			if l.scooter.bump <= 0.0:
+				_fail("the strip should be rough (bump=%s)" % l.scooter.bump)
+			await _drive(l, pts.slice(1), 3.0, 90.0, 1.0)
+			await _drive(l, [Vector3(10.0, 0, -499.0)], 9.0, 120.0)  # 32 km/h: under every limit
 			_expect_win(l)],
 		[7, "全速衝過五支測速（40-50-40-50-40）", func(l: LevelBase) -> void:
 			Game.gm = true  # keep riding through every flash
-			_teleport(l, Vector3(11.25, 0.1, -200.0), 0.0)
+			_teleport(l, Vector3(10.0, 0.1, -200.0), 0.0)
 			l.scooter.speed = 14.0
-			await _drive(l, [Vector3(11.25, 0, -490.0)], 14.0, 60.0)
+			await _drive(l, [Vector3(10.0, 0, -490.0)], 14.0, 60.0)
 			Game.gm = false
 			_expect_tickets(["speeding_scooter", "speeding_scooter", "speeding_scooter", "speeding_scooter", "speeding_scooter"])],
 		[3, "待轉時停在格子外面", func(l: LevelBase) -> void:
