@@ -45,11 +45,6 @@ func _ready() -> void:
 		box.add_child(_label("＝ 用最低時薪 %d 元工作 %.1f 小時。" % [MIN_WAGE_HOURLY, hours], 22, Color.WHITE))
 		box.add_child(_label("＝ 一台跨雙黃線逆向的聯結車被罰 %.1f 次。" % (Game.total_fine / truck), 22, Color.WHITE))
 
-	# To the people who ride these roads for real.
-	box.add_child(HSeparator.new())
-	box.add_child(_label("謹向每天騎過台 61 西濱後龍段機車道、新北土城擺接堡路的用路人，以及全台每天在待轉區裡等紅燈的機車騎士，致上最深的敬意。", 22, Color(1, 0.85, 0.3), true))
-	box.add_child(_label("你們每天都在玩這個遊戲，而且沒有 R 鍵。", 22, Color.WHITE))
-
 	# Sources: one line per article (all clauses of it merged), then the fine table and wage.
 	box.add_child(HSeparator.new())
 	box.add_child(_label("出處", 18, Color(0.75, 0.75, 0.75), true))
@@ -66,7 +61,7 @@ func _ready() -> void:
 	box.add_child(_label("罰鍰金額：違反道路交通管理事件統一裁罰基準表\n" + FINE_TABLE_URL, 15, Color(0.65, 0.65, 0.65)))
 	box.add_child(_label("最低工資：勞動部公告（115 年 1 月 1 日起時薪 196 元）\n" + MIN_WAGE_URL, 15, Color(0.65, 0.65, 0.65)))
 
-	var footer := _label("按空白鍵重新開始　（↑↓ 或滑鼠滾輪捲動）", 22, Color(0.7, 0.9, 1.0))
+	var footer := _label("按空白鍵繼續　（↑↓ 或滑鼠滾輪捲動）", 22, Color(0.7, 0.9, 1.0))
 	footer.position = Vector2(90, 660)
 	add_child(footer)
 
@@ -79,8 +74,7 @@ func _process(delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("restart"):
-		Game.reset()
-		Game.start_level(0)
+		get_tree().change_scene_to_file("res://scenes/tribute.tscn")  # the tribute page comes last
 
 
 func _label(text: String, size: int, color: Color, bold := false) -> Label:
