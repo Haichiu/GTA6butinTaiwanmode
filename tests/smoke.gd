@@ -110,6 +110,9 @@ func _cases() -> Array:
 			await _teleport_expect(l, Vector3(-3.5, 0.1, -2.0), PI, ["uturn_no_left"])],
 		[5, "在雙黃線上迴轉", func(l: LevelBase) -> void:
 			await _teleport_expect(l, Vector3(-3.5, 0.1, -60.0), PI, ["uturn_double_yellow"])],
+		[5, "內側車道直行過路口，看到禁行機車前換到外側：不罰", func(l: LevelBase) -> void:
+			await _drive(l, [Vector3(1.75, 0, 20), Vector3(1.75, 0, -14), Vector3(5.25, 0, -26), Vector3(5.25, 0, -60)], 8.0)
+			_expect_tickets([])],
 		[5, "過了路口還騎在畫左轉箭頭的內側車道", func(l: LevelBase) -> void:
 			await _teleport_expect(l, Vector3(1.75, 0.1, -40.0), 0.0, ["lane_ban"])],
 		[5, "第二個路口沒有標誌就直接左轉", func(l: LevelBase) -> void:

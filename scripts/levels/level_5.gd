@@ -104,8 +104,10 @@ func _add_rules() -> void:
 		"不能左轉，那迴轉總可以吧？不行，禁止左轉的地方也不能迴轉：900，比左轉還貴。", back)
 	ViolationZone.make(self, Vector2(-HALF, B_Z + STOP + 1.0), Vector2(-0.3, -A_HALF - 1.0), "uturn_double_yellow", "no_left_turn",
 		"在雙黃線上迴轉 900，比剛剛直接左轉（600）還貴。", back)
-	# Between A and B: inner lane 禁行機車.
-	ViolationZone.make(self, Vector2(0.3, B_Z + STOP), Vector2(3.3, -A_HALF - 4.0), "lane_ban", "no_left_turn",
+	# Between A and B: inner lane 禁行機車 — enforced only from the first painted marking (z -30).
+	# Riding straight out of A in the inner lane is legal (its arrow allows it); the dashed line
+	# before the marking leaves room to move over.
+	ViolationZone.make(self, Vector2(0.3, B_Z + STOP), Vector2(3.3, -34.0), "lane_ban", "no_left_turn",
 		"過了路口，剛剛畫著左轉箭頭的那條車道，變成禁行機車。", fwd)
 	# Junction B: no sign, but the inner lane is 禁行機車 -> two stages anyway.
 	ViolationZone.make(self, Vector2(-150.0, B_Z - B_HALF), Vector2(-0.5, B_Z + B_HALF), "two_stage_left", "no_left_turn",

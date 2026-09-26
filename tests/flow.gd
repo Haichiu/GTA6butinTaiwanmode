@@ -23,6 +23,9 @@ func _ready() -> void:
 	await _frames(20)
 	print("current scene: ", tree.current_scene.scene_file_path)
 	await _shot(out_dir + "/summary.png")
+	tree.change_scene_to_file("res://scenes/tribute.tscn")
+	await _frames(90)
+	await _shot(out_dir + "/tribute.png")
 	tree.quit()
 
 
