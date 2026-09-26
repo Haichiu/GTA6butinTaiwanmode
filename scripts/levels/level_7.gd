@@ -23,6 +23,7 @@ const DW := 2.2  # detour width
 const LOOP_X := 20.0
 const ROUGH_END := -190.0  # where the broken surface ends
 const Z_END := -540.0
+const GOAL_Z := -405.0
 const GRAVEL := Color(0.55, 0.5, 0.42)
 
 
@@ -224,15 +225,19 @@ func _add_rules() -> void:
 		var c: Vector2 = piece[1]
 		var reach: float = piece[2] + DW
 		_zone_setter(c - Vector2(reach, reach), c + Vector2(reach, reach), "grip", 0.5, 1.0)
-	goal(Vector2(POST_X + 0.2, -505.0), Vector2(MIX_MAX, -495.0))
-	gps = [Vector3(4.0, 0, -500.0)]
-	# Once the jam clears: five cameras in 300 m. The 40 -> 50 -> 40 -> 50 pattern is copied from
+	goal(Vector2(POST_X + 0.2, GOAL_Z - 5.0), Vector2(MIX_MAX, GOAL_Z + 5.0))
+	gps = [Vector3(4.0, 0, GOAL_Z)]
+	# It's a long way in one go: checkpoints on the squeeze, out of the U-turn, and before the cameras.
+	checkpoint_at(Vector2(POST_X, 4.0), Vector2(MIX_MAX, 14.0), "棒棒糖窄縫")
+	checkpoint_at(Vector2(POST_X, BLOCK_END - 10.0), Vector2(MIX_MAX, BLOCK_END - 4.0), "迴轉出口")
+	checkpoint_at(Vector2(POST_X, ROUGH_END - 8.0), Vector2(MIX_MAX, ROUGH_END), "測速照相前")
+	# Once the jam clears: five cameras in 160 m. The 40 -> 50 -> 40 -> 50 pattern is copied from
 	# 新北土城擺接堡路 (自由時報 2026-09-19); five cameras on it is our exaggeration. Top speed is
 	# 50.4 km/h, so flat out every one of them gets you. Fines: the real 第40條 tiers.
-	for cam in [[-235.0, 40], [-295.0, 50], [-355.0, 40], [-415.0, 50], [-470.0, 40]]:
+	for cam in [[-215.0, 40], [-255.0, 50], [-295.0, 40], [-335.0, 50], [-375.0, 40]]:
 		speed_camera(LANE_X, cam[0], cam[1], BARRIER_X + 1.0)
 	on_enter(Vector2(POST_X, BLOCK_START - 2.0), Vector2(LANE_X + 6.0, BLOCK_START + 6.0), func() -> void:
-		gps = [Vector3(LOOP_X + 4.0, 0, (BLOCK_START + BLOCK_END) / 2.0), Vector3(LANE_X, 0, BLOCK_END - 8.0), Vector3(LANE_X, 0, -500.0)]
+		gps = [Vector3(LOOP_X + 4.0, 0, (BLOCK_START + BLOCK_END) / 2.0), Vector3(LANE_X, 0, BLOCK_END - 8.0), Vector3(LANE_X, 0, GOAL_Z)]
 		_gps_index = 0
 		toast("導航：……前面不是直直的嗎？"))
 	# Cars (and trucks) in the lanes beside you — including the mixed lane, right next to the posts.

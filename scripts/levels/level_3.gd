@@ -76,8 +76,9 @@ func build() -> void:
 	sign_board("機慢車\n兩段左轉", Vector3(HALF + 1.2, 0, 40.0), 0.0, Color(0.15, 0.35, 0.75), 2.2)
 	sign_board("科技執法\n違規取締", Vector3(HALF + 1.2, 0, 22.0), 0.0, Color(0.9, 0.75, 0.1), 2.2)
 	sign_board("早餐", Vector3(-95.0, 0, -EW - 1.5), 0.0, Color(0.8, 0.25, 0.15), 2.5)
-	sign_board("文化路二段", Vector3(HALF + 1.5, 0, 60.0), 0.0, Color(0.1, 0.35, 0.7), 3.0)
-	sign_board("182巷", Vector3(-HALF - 1.5, 0, -EW - 1.5), 0.0, Color(0.1, 0.35, 0.7), 2.4)
+	street_plate("文化路二段", Vector3(HALF + 1.0, 0, 60.0), 0.0, -2.5)
+	street_plate("文化路二段182巷", Vector3(HALF + 1.0, 0, EW + WALK + 1.0), 0.0, -3.0)
+	street_plate("文化路二段182巷", Vector3(-HALF - 1.0, 0, -EW - WALK - 1.0), PI, -3.0)
 
 	sig = TrafficSignal.new()
 	add_child(sig)

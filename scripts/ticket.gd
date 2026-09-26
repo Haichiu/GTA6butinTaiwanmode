@@ -52,7 +52,10 @@ func show_ticket(law_id: String, contrast_id: String, caption: String, charged :
 
 	box.add_child(HSeparator.new())
 	box.add_child(_label("今日累計罰款：新臺幣 %s 元" % _money(Game.total_fine), 20, INK))
-	box.add_child(_label("按 R／Enter／空白鍵 重來", 18, INK.lightened(0.3)))
+	var hint := "按 R／Enter／空白鍵 重來"
+	if get_parent() is LevelBase:
+		hint = (get_parent() as LevelBase).restart_hint()
+	box.add_child(_label(hint, 18, INK.lightened(0.3)))
 
 	# A full-screen holder slides; the panel stays centered inside it.
 	var center := Control.new()

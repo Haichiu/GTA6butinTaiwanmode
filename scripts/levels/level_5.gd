@@ -84,8 +84,12 @@ func build() -> void:
 	sig.setup(TrafficSignal.Phase.EW_GO, 8.0)
 	sig.add_head(Vector3(HALF + 1.5, 0, B_Z - B_HALF - 4.0), "ns", Vector3.FORWARD)
 	sig.add_head(Vector3(-HALF - 2.0, 0, B_Z - B_HALF - 1.5), "ew", Vector3.LEFT)
-	sign_board("民族一路", Vector3(HALF + 1.5, 0, 70.0), 0.0, Color(0.1, 0.35, 0.7), 3.0)
-	sign_board("十全一路", Vector3(-HALF - 1.5, 0, B_Z + B_HALF + 1.5), 0.0, Color(0.1, 0.35, 0.7), 2.6)
+	street_plate("民族一路", Vector3(HALF + 1.0, 0, 70.0), 0.0, -2.5)
+	# Junction A is 九如路 (九如二路 to the left, 九如一路 to the right); B is 十全一路／十全路.
+	street_plate("九如一路", Vector3(HALF + 1.0, 0, A_HALF + WALK + 1.0), 0.0, -3.0)
+	street_plate("九如二路", Vector3(-HALF - 1.0, 0, -A_HALF - WALK - 1.0), PI, -3.0)
+	street_plate("十全路", Vector3(HALF + 1.0, 0, B_Z + B_HALF + WALK + 1.0), 0.0, -3.0)
+	street_plate("十全一路", Vector3(-HALF - 1.0, 0, B_Z - B_HALF - WALK - 1.0), PI, -3.0)
 	for z in [60.0, -95.0, -190.0]:
 		K.ground_text(self, "縱\n貫\n公\n路", Vector2(5.25, z), K.WHITE, 0.0, 0.010)
 	_school()
