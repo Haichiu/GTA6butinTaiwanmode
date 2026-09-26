@@ -167,13 +167,29 @@ func _cases() -> Array:
 			if l.scooter.bump <= 0.0:
 				_fail("the strip should be rough (bump=%s)" % l.scooter.bump)
 			await _drive(l, pts.slice(1), 3.0, 90.0, 1.0)
-			await _drive(l, [Vector3(10.0, 0, -499.0)], 9.0, 120.0)  # 32 km/h: under every limit
+			await _drive(l, [Vector3(10.0, 0, -405.0)], 9.0, 120.0)  # 32 km/h: under every limit
 			_expect_win(l)],
+		[7, "撞車之後從檢查點重來，罰款不會退", func(l: LevelBase) -> void:
+			await _drive(l, [Vector3(10.0, 0, -95.0)], 8.0)  # passes the 棒棒糖窄縫 checkpoint
+			_checks += 1
+			if l._checkpoint_name() != "棒棒糖窄縫":
+				_fail("expected the squeeze checkpoint, got '%s'" % l._checkpoint_name())
+			await _drive(l, [Vector3(10.0, 0, -130.0)], 13.0, 20.0)  # straight into the detour posts
+			_checks += 1
+			if not (l._ended and "棒棒糖窄縫" in l.restart_hint()):
+				_fail("crash should offer the checkpoint (ended=%s hint=%s)" % [l._ended, l.restart_hint()])
+			var again: LevelBase = load(Game.LEVELS[6]).instantiate()
+			add_child(again)
+			await _frames(3)
+			_checks += 1
+			if again.scooter.global_position.z > 10.0:
+				_fail("retry should start at the checkpoint, got z=%.1f" % again.scooter.global_position.z)
+			again.queue_free()],
 		[7, "全速衝過五支測速（40-50-40-50-40）", func(l: LevelBase) -> void:
 			Game.gm = true  # keep riding through every flash
 			_teleport(l, Vector3(10.0, 0.1, -200.0), 0.0)
 			l.scooter.speed = 14.0
-			await _drive(l, [Vector3(10.0, 0, -490.0)], 14.0, 60.0)
+			await _drive(l, [Vector3(10.0, 0, -395.0)], 14.0, 60.0)
 			Game.gm = false
 			_expect_tickets(["speeding_scooter", "speeding_scooter", "speeding_scooter", "speeding_scooter", "speeding_scooter"])],
 		[3, "待轉時停在格子外面", func(l: LevelBase) -> void:
@@ -218,12 +234,20 @@ func _cases() -> Array:
 			_checks += 1
 			if waiting == 0 or not crossed.is_empty():
 				_fail("northbound cars should queue behind the stop line (waiting=%d crossed=%s)" % [waiting, crossed]), "ambient"],
-		[1, "聯結車跨雙黃線衝過來：沒閃被撞（對方的罰單）", func(l: LevelBase) -> void:
-			_teleport(l, Vector3(7.7, 0.1, -190.0), 0.0)
-			await _drive(l, [Vector3(7.7, 0, -296.0)], 10.0, 30.0)
+		[1, "聯結車跨雙黃線衝過來：乖乖騎外側就擦身而過", func(l: LevelBase) -> void:
+			_teleport(l, Vector3(8.75, 0.1, -190.0), 0.0)
+			await _drive(l, [Vector3(8.75, 0, -296.0)], 10.0, 30.0)
 			_checks += 1
-			if not (l.truck_hit and Game.tickets.is_empty()):
-				_fail("expected the truck to hit (hit=%s tickets=%s)" % [l.truck_hit, Game.tickets]), "ambient"],
+			if l.truck_hit or not l._won:
+				_fail("keeping right should get past the truck (hit=%s won=%s)" % [l.truck_hit, l._won]), "ambient"],
+		[1, "聯結車跨雙黃線衝過來：騎在內側車道被撞（對方的罰單）", func(l: LevelBase) -> void:
+			Game.gm = true  # ride on through the lane_ban ticket to meet the truck
+			_teleport(l, Vector3(4.5, 0.1, -190.0), 0.0)
+			await _drive(l, [Vector3(4.5, 0, -296.0)], 10.0, 30.0, 3.0, true, func() -> bool: return l.truck_hit)
+			Game.gm = false
+			_checks += 1
+			if not l.truck_hit:
+				_fail("expected the truck to hit a rider in the inner lane"), "ambient"],
 		[1, "老阿伯衝出來：沒煞車撞上", func(l: LevelBase) -> void:
 			_teleport(l, Vector3(7.7, 0.1, -110.0), 0.0)
 			await _drive(l, [Vector3(7.7, 0, -170.0)], 10.0, 20.0)
@@ -328,11 +352,12 @@ func _teleport_expect(l: LevelBase, pos: Vector3, yaw: float, expected: Array, s
 
 
 ## Autopilot through waypoints at `cruise` m/s. Stops early if the level ends.
-func _drive(l: LevelBase, points: Array, cruise: float, timeout := 90.0, reach := 3.0, coast := true) -> void:
+## `until`: optional Callable; the drive stops early (successfully) once it returns true.
+func _drive(l: LevelBase, points: Array, cruise: float, timeout := 90.0, reach := 3.0, coast := true, until := Callable()) -> void:
 	var s := l.scooter
 	var i := 0
 	var t := 0.0
-	while i < points.size() and t < timeout and not l._ended:
+	while i < points.size() and t < timeout and not l._ended and not (until.is_valid() and until.call()):
 		var to: Vector3 = points[i] - s.global_position
 		to.y = 0.0
 		if to.length() < reach:

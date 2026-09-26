@@ -35,6 +35,9 @@ var gm_available := OS.is_debug_build()
 var gm := false
 ## Hazards and ambient traffic. Rule tests switch this off so they stay deterministic.
 var ambient := true
+## Last checkpoint reached on a long level: {level, transform, elapsed, name}. Retrying after a
+## crash or a ticket starts from here; pressing R while riding, or changing level, clears it.
+var checkpoint := {}
 var sfx: Sfx
 
 
@@ -97,10 +100,12 @@ func reset() -> void:
 	total_points = 0
 	tickets.clear()
 	level_index = 0
+	checkpoint = {}
 
 
 func start_level(index: int) -> void:
 	level_index = index
+	checkpoint = {}
 	get_tree().change_scene_to_file(LEVELS[index] if index < LEVELS.size() else SUMMARY)
 
 

@@ -16,7 +16,7 @@ func _init() -> void:
 	title = "空蕩蕩的內側車道"
 	who = "上班族・07:52"
 	objective = "八點打卡，今天再遲到就沒有全勤獎金了。公司在這條路直走到底。"
-	deadline = 40.0
+	deadline = 50.0
 	deadline_name = "打卡"
 	place = "公司"
 	waiting_person = false
@@ -41,15 +41,16 @@ func build() -> void:
 		z -= 50.0
 	_light_rail()
 	_harbour_skyline()
-	sign_board("成功二路", Vector3(HALF + 1.5, 0, 30.0), 0.0, Color(0.1, 0.45, 0.25), 3.0)
+	street_plate("成功二路", Vector3(HALF + 1.0, 0, 30.0), 0.0, -2.5)
 	StreetDressing.ns_side(self, HALF, Z_START, Z_END, 1, WALK, [[-157.0, -147.0]])
 	StreetDressing.ns_side(self, -HALF, Z_START, Z_END, -1, WALK)
 	buildings_ns(HALF + WALK + 8.0, Z_END, Z_START, -1)
 	buildings_ns(-HALF - WALK - 8.0, Z_END, Z_START, 1)
 
 	# The outer lane's obstacle course (all facing north).
+	# Tutorial: four, well spaced, and none where the 聯結車 swings over.
 	var parked := [["delivery", -40.0, 6.0], ["sedan", -90.0, 4.5], ["truck", -130.0, 6.5],
-		["delivery", -175.0, 6.0], ["taxi", -215.0, 4.5], ["van", -250.0, 5.0]]
+		["delivery", -175.0, 6.0]]
 	for p in parked:
 		model(CARS + p[0] + ".glb", Vector3(9.5, 0, p[1]), PI, p[2], true)
 	sign_board("股份有限公司", Vector3(HALF + 1.5, 0, -300.0), -PI / 2.0, Color(0.3, 0.3, 0.35), 2.5)
@@ -85,6 +86,7 @@ func _light_rail() -> void:
 	for x in [-HALF - WALK - 2.0, HALF + WALK + 2.0]:
 		K.box(self, Vector3(0.25, 6.5, 0.25), Vector3(x, 3.25, RAIL_Z), Color(0.5, 0.5, 0.52))
 	sign_board("注意輕軌", Vector3(HALF + 1.2, 0, RAIL_Z + 12.0), 0.0, Color(0.9, 0.75, 0.1), 2.0)
+	street_plate("凱旋四路", Vector3(HALF + 1.0, 0, RAIL_Z + 5.0), 0.0, -3.0)  # the tracks run along it here
 	for x in [-HALF + 0.2, 0.2]:
 		K.line(self, Vector2(x, RAIL_Z + 4.5), Vector2(x + HALF - 0.4, RAIL_Z + 4.5), K.WHITE, 0.4)  # stop lines before the tracks
 	# A tram waiting on the grass track just off the road: white with a green stripe.
@@ -144,11 +146,12 @@ var truck_hit := false
 func after_spawn() -> void:
 	if not Game.ambient:
 		return
-	# Near the end, a southbound 聯結車 swings across the double yellow into your side.
-	# Gentle waypoints: the trailer swings with each heading change, so no sharp kinks, and it only
-	# drifts back after it has passed you.
+	# Near the end, a southbound 聯結車 swings across the double yellow into your side — into the
+	# empty 禁行機車 lanes. It's a scare for a rider who kept right; it only gets you if you're in
+	# the lanes you weren't allowed in (tutorial level: the outer lane is the safe one).
+	# Gentle waypoints: the trailer swings with each heading change, so no sharp kinks.
 	var path: Array[Vector3] = [Vector3(-5.25, 0, -340.0), Vector3(-5.25, 0, -305.0), Vector3(-2.0, 0, -299.0),
-		Vector3(2.5, 0, -292.0), Vector3(6.3, 0, -284.0), Vector3(6.3, 0, -225.0), Vector3(2.5, 0, -217.0),
+		Vector3(1.5, 0, -292.0), Vector3(4.2, 0, -284.0), Vector3(4.2, 0, -225.0), Vector3(1.5, 0, -217.0),
 		Vector3(-2.0, 0, -210.0), Vector3(-5.25, 0, -204.0), Vector3(-5.25, 0, 80.0)]
 	truck = NpcVehicle.make_custom(self, semi_truck(), AABB(Vector3(-1.3, 0, -11.0), Vector3(2.6, 4.0, 16.0)), path, 12.0)
 	truck.target = scooter

@@ -105,6 +105,8 @@ func _taipei_bridge() -> void:
 	sign_board("水門", Vector3(-40.0, 4.5, BRIDGE_END - 9.5), 0.0, Color(0.2, 0.35, 0.6), 1.5)
 	sign_board("台北橋", Vector3(STRIP_MAX + 1.4, 0, BRIDGE_START + 4.0), 0.0, Color(0.1, 0.45, 0.25), 2.8)
 	sign_board("台1甲", Vector3(-HALF - 1.5, 0, 30.0), PI, Color(0.1, 0.45, 0.25), 2.2)
+	street_plate("重新路", Vector3(HALF + 1.0, 0, 50.0), 0.0, -2.5)
+	street_plate("環河北路", Vector3(STRIP_MAX + 1.5, 0, BRIDGE_END + 6.0), 0.0, -3.0)
 	# 三重 behind you: tall residential towers. 台北 ahead: 大稻埕's low old shophouses.
 	for i in 6:
 		K.box(self, Vector3(18.0, 60.0 + (i % 3) * 20.0, 18.0), Vector3(-80.0 + i * 32.0, 30.0 + (i % 3) * 10.0, 140.0 + (i % 2) * 30.0),

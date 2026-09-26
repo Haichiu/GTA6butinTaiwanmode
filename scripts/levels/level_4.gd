@@ -74,7 +74,10 @@ func build() -> void:
 	sign_board("施工中\n外側車道封閉", Vector3(HALF + 1.2, 0, 75.0), 0.0, Color(0.9, 0.5, 0.1), 2.2)
 	sign_board("機慢車\n兩段右轉", Vector3(-HALF - 1.2, 0, 40.0), 0.0, Color(0.15, 0.35, 0.75), 2.2)
 	sign_board("銀行", Vector3(95.0, 0, EW + 1.5), PI, Color(0.1, 0.4, 0.7), 2.5)
-	sign_board("重慶南路一段", Vector3(-HALF - 1.5, 0, 60.0), 0.0, Color(0.1, 0.35, 0.7), 3.0)
+	street_plate("重慶南路一段", Vector3(-HALF - 1.0, 0, 60.0), 0.0, 2.5)
+	# 開封街一段: one-way, and the way it runs is the way a southbound rider turns right (OSM).
+	street_plate("開封街一段", Vector3(-HALF - 1.0, 0, EW + WALK + 1.0), 0.0, 3.0)
+	street_plate("開封街一段", Vector3(HALF + 1.0, 0, -EW - WALK - 1.0), PI, 3.0)
 	_bookshops_and_tower()
 
 	sig = TrafficSignal.new()

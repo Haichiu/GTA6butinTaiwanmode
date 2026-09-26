@@ -52,6 +52,9 @@ func _ready() -> void:
 	scooter.name = "Scooter"
 	# Set the transform before entering the tree so it never exists at the origin (inside zones).
 	scooter.transform = spawn_transform()
+	if _checkpoint_name() != "":
+		scooter.transform = Game.checkpoint["transform"]
+		_elapsed = Game.checkpoint["elapsed"]
 	add_child(scooter)
 	camera = FollowCamera.new()
 	camera.target = scooter
@@ -105,7 +108,11 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	# R restarts the level at any time (not Space/Enter: too easy to hit by accident mid-ride).
 	var key := event as InputEventKey
-	if key != null and key.pressed and not key.echo and key.physical_keycode == KEY_R and not _ended:
+	# R always means "from the very start" (drops the checkpoint); Space/Enter after a crash or
+	# ticket resumes from the checkpoint.
+	var r_key := key != null and key.pressed and not key.echo and key.physical_keycode == KEY_R
+	if r_key and (not _ended or (_can_continue and not _won)):
+		Game.checkpoint = {}
 		get_tree().reload_current_scene()
 		return
 	if _can_continue and event.is_action_pressed("restart"):
@@ -375,7 +382,7 @@ func fail(text: String) -> void:
 		toast("GM｜" + text, 3.0)
 		return
 	_end()
-	_show_message(text + "\n按空白鍵重來")
+	_show_message(text + "\n" + restart_hint())
 
 
 func _on_violated(law_id: String, contrast_id: String, caption: String, charged: bool) -> void:
@@ -403,7 +410,7 @@ func _end() -> void:
 func _off_map() -> void:
 	Game.sfx.play("crash")
 	_end()  # even in GM mode: there's nothing to ride back to
-	_show_message("騎出地圖了。\n按空白鍵重來")
+	_show_message("騎出地圖了。\n" + restart_hint())
 
 
 ## Transient notice in the top-left (reuses the intro label).
@@ -433,6 +440,27 @@ func on_enter(min_xz: Vector2, max_xz: Vector2, fn: Callable) -> void:
 			fired[0] = true
 			fn.call())
 	add_child(area)
+
+
+## Checkpoint for long levels: riding into the area saves where you are (facing `yaw`) and the
+## clock; a retry after a crash or ticket resumes there. Fines already paid stay paid.
+func checkpoint_at(min_xz: Vector2, max_xz: Vector2, label: String, yaw := 0.0) -> void:
+	var c := (min_xz + max_xz) / 2.0
+	on_enter(min_xz, max_xz, func() -> void:
+		if _ended or _checkpoint_name() == label:
+			return
+		Game.checkpoint = {"level": Game.level_index, "name": label, "elapsed": _elapsed,
+			"transform": Transform3D(Basis(Vector3.UP, yaw), Vector3(c.x, 0.1, c.y))}
+		toast("檢查點：%s" % label, 2.0))
+
+
+func _checkpoint_name() -> String:
+	return Game.checkpoint.get("name", "") if Game.checkpoint.get("level", -1) == Game.level_index else ""
+
+
+func restart_hint() -> String:
+	var cp := _checkpoint_name()
+	return "按空白鍵從「%s」重來　（R 從頭開始）" % cp if cp != "" else "按空白鍵重來"
 
 
 func _show_message(text: String) -> void:
@@ -579,6 +607,33 @@ func sign_board(text: String, pos: Vector3, facing_y: float, bg := Color(0.15, 0
 	root.add_child(label)
 
 
+## A Taiwanese street-name plate (路名牌): a blue horizontal plate with a white border, high on a
+## pole with an arm reaching `arm` m out over the road (positive = the plate's right). Readable
+## from both sides. facing_y as for sign_board (0 faces +Z, toward riders coming north).
+func street_plate(text: String, pos: Vector3, facing_y: float, arm := 2.5) -> void:
+	var root := Node3D.new()
+	root.position = pos
+	root.rotation.y = facing_y
+	add_child(root)
+	var grey := Color(0.55, 0.56, 0.58)
+	K.box(root, Vector3(0.18, 5.2, 0.18), Vector3(0, 2.6, 0), grey)
+	K.box(root, Vector3(absf(arm) + 0.2, 0.12, 0.12), Vector3(arm / 2.0, 5.0, 0), grey)
+	var w := text.length() * 0.5 + 0.8
+	var at := Vector3(arm, 4.45, 0)
+	K.box(root, Vector3(w + 0.12, 0.82, 0.05), at, Color.WHITE)
+	K.box(root, Vector3(w, 0.7, 0.08), at, Color(0.08, 0.3, 0.62))
+	for face in [1.0, -1.0]:
+		var label := Label3D.new()
+		label.text = text
+		label.font = K.font()
+		label.font_size = 96
+		label.pixel_size = 0.0045
+		label.position = at + Vector3(0, 0, 0.05 * face)
+		label.rotation.y = 0.0 if face > 0 else PI
+		label.modulate = Color.WHITE
+		root.add_child(label)
+
+
 static func aabb_of(node: Node) -> AABB:
 	var result := AABB()
 	var first := true
@@ -687,8 +742,9 @@ func _setup_hud() -> void:
 	layer.add_child(_gm_label)
 	_message = _hud_label(40)
 	_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_message.position = Vector2(240, 280)
-	_message.size = Vector2(800, 160)
+	_message.position = Vector2(140, 250)
+	_message.size = Vector2(1000, 220)
+	_message.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY  # CJK: break anywhere; long crash lines stay on screen
 	_message.visible = false
 	layer.add_child(_message)
 	_intro = _hud_label(30)
