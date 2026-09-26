@@ -8,6 +8,11 @@ extends LevelBase
 ## Junction B (z = B_Z): no 兩段式左轉 sign at all — but because the inner lane is 禁行機車,
 ##   police say you must still turn left in two stages (警方四原則, see docs/laws.md).
 ##   The school is left at B.
+## Setting: 高雄民族一路 (台1線)・十全一路口, 愛國國小. In 交通部「學校周邊肇事熱點」 its
+## 500 m radius had the most crashes of any 國小 we checked for 2025 (民族一路 alone: 118 crashes,
+## 191 injured). Street View 2024: big trees at the school corner, 禁行機車 painted in yellow on the
+## inner lanes, 縱貫公路 painted in the outer lane, the 果菜市場 across the road.
+## Simplified: the real road is 3+3 with a planted median; the 7–9 禁止左轉 at junction A is ours.
 
 const HALF := 7.0  # arterial 2+2
 const WALK := 4.0
@@ -79,19 +84,77 @@ func build() -> void:
 	sig.setup(TrafficSignal.Phase.EW_GO, 8.0)
 	sig.add_head(Vector3(HALF + 1.5, 0, B_Z - B_HALF - 4.0), "ns", Vector3.FORWARD)
 	sig.add_head(Vector3(-HALF - 2.0, 0, B_Z - B_HALF - 1.5), "ew", Vector3.LEFT)
-	sign_board("國小", Vector3(-80.0, 0, B_Z - B_HALF - 1.5), 0.0, Color(0.1, 0.5, 0.3), 2.5)
+	sign_board("民族一路", Vector3(HALF + 1.5, 0, 70.0), 0.0, Color(0.1, 0.35, 0.7), 3.0)
+	sign_board("十全一路", Vector3(-HALF - 1.5, 0, B_Z + B_HALF + 1.5), 0.0, Color(0.1, 0.35, 0.7), 2.6)
+	for z in [60.0, -95.0, -190.0]:
+		K.ground_text(self, "縱\n貫\n公\n路", Vector2(5.25, z), K.WHITE, 0.0, 0.010)
+	_school()
+	_fruit_market()
+	buildings_ew(B_Z - B_HALF - WALK - 8.0, -130.0, -HALF - WALK - 14.0, 1)
 	for sx in [-1, 1]:
 		# Sidewalks the whole way, dressed like any Taiwanese street.
 		for seg in [[A_HALF + WALK, 95.0], [B_Z + B_HALF + WALK, -A_HALF - WALK], [-220.0, B_Z - B_HALF - WALK]]:
 			K.surface(self, Vector2(minf(sx * HALF, sx * (HALF + WALK)), seg[0]), Vector2(maxf(sx * HALF, sx * (HALF + WALK)), seg[1]), K.SIDEWALK, 0.03)
 			StreetDressing.ns_side(self, sx * HALF, seg[1], seg[0], sx, WALK)
 		buildings_ns(sx * (HALF + WALK + 8.0), A_HALF + WALK, 95.0, -sx)
-		buildings_ns(sx * (HALF + WALK + 8.0), B_Z + B_HALF + 4.0, -A_HALF - WALK, -sx)
 		buildings_ns(sx * (HALF + WALK + 8.0), -220.0, B_Z - B_HALF - 4.0, -sx)
 	box = WaitBox.make(self, BOX_MIN, BOX_MAX)
 	box.turn_area = Rect2(Vector2(-HALF, B_Z - B_HALF), Vector2(2.0 * HALF + 3.3, 2.0 * B_HALF))
 	_add_rules()
 	gps = [Vector3(-2.0, 0, -2.0), Vector3(-80.0, 0, B_Z - 3.5)]
+
+
+## SW corner of junction B: the school behind a low wall and a row of big trees, the teaching block
+## with coloured window bands, a red running track. The gate is on 十全一路.
+func _school() -> void:
+	var x0 := -HALF - WALK - 1.0
+	var z0 := B_Z + B_HALF + WALK + 1.0
+	var z1 := -A_HALF - WALK - 1.0
+	var wall := Color(0.85, 0.82, 0.74)
+	K.box(self, Vector3(0.3, 1.4, z1 - z0), Vector3(x0, 0.7, (z0 + z1) / 2.0), wall, true)
+	for seg in [[-120.0, -84.0], [-76.0, x0]]:  # gap for the gate at x -80
+		K.box(self, Vector3(seg[1] - seg[0], 1.4, 0.3), Vector3((seg[0] + seg[1]) / 2.0, 0.7, z0), wall, true)
+	K.surface(self, Vector2(-120.0, z0), Vector2(x0, z1), Color(0.33, 0.52, 0.3), 0.01)
+	# Big old trees behind the wall along both roads (the corner is a wall of green in Street View).
+	var z := z0 + 4.0
+	while z < z1 - 2.0:
+		StreetDressing._tree(self, Vector3(x0 - 2.5, 0, z), 1.6)
+		z += 9.0
+	var x := x0 - 8.0
+	while x > -118.0:
+		if absf(x + 80.0) > 5.0:
+			StreetDressing._tree(self, Vector3(x, 0, z0 + 2.5), 1.6)
+		x -= 9.0
+	K.surface(self, Vector2(-100.0, -75.0), Vector2(-40.0, -20.0), Color(0.7, 0.3, 0.25), 0.015)
+	K.surface(self, Vector2(-94.0, -69.0), Vector2(-46.0, -26.0), Color(0.33, 0.52, 0.3), 0.017)
+	var block := Vector3(-70.0, 0, -98.0)
+	K.box(self, Vector3(70.0, 15.0, 12.0), block + Vector3(0, 7.5, 0), Color(0.92, 0.9, 0.84), true)
+	for y in [3.5, 7.0, 10.5, 14.0]:
+		for i in 7:
+			K.box(self, Vector3(8.0, 1.2, 0.2), block + Vector3(-30.0 + i * 10.0, y, -6.1),  # facing 十全一路
+				[Color(0.2, 0.5, 0.75), Color(0.85, 0.35, 0.3), Color(0.95, 0.75, 0.2), Color(0.35, 0.65, 0.4)][(i + int(y)) % 4])
+	sign_board("愛國國小", Vector3(-80.0, 0, z0 + 0.5), PI, Color(0.1, 0.5, 0.3), 2.5)
+
+
+## SE corner: 高雄果菜市場 — long low sheds, trucks backed up to them, stacks of fruit crates.
+func _fruit_market() -> void:
+	var x0 := HALF + WALK + 4.0
+	for i in 3:
+		var shed := Vector3(x0 + 18.0 + i * 26.0, 0, -70.0)
+		K.box(self, Vector3(22.0, 0.6, 100.0), shed + Vector3(0, 7.0, 0), Color(0.55, 0.6, 0.62))
+		for dz in [-45.0, -15.0, 15.0, 45.0]:
+			for dx in [-10.0, 10.0]:
+				K.box(self, Vector3(0.4, 7.0, 0.4), shed + Vector3(dx, 3.5, dz), Color(0.5, 0.5, 0.5))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 5
+	for i in 6:
+		model(CARS + "truck.glb", Vector3(x0 + 6.0, 0, -30.0 - i * 16.0), PI / 2.0, 6.0, true)
+	for i in 40:
+		var p := Vector3(x0 + rng.randf_range(10.0, 80.0), 0, rng.randf_range(-118.0, -22.0))
+		var h := rng.randi_range(1, 4)
+		K.box(self, Vector3(0.6, 0.35 * h, 0.45), p + Vector3(0, 0.175 * h, 0),
+			[Color(0.2, 0.45, 0.75), Color(0.85, 0.3, 0.25), Color(0.9, 0.75, 0.2)][i % 3])
+	sign_board("果菜市場", Vector3(HALF + WALK + 1.0, 0, -40.0), -PI / 2.0, Color(0.1, 0.5, 0.3), 3.0)
 
 
 func _add_rules() -> void:

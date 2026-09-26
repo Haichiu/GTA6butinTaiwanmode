@@ -3,6 +3,8 @@ extends LevelBase
 ## One-way road, four lanes. Scooters may use only the outermost lanes; the right one is closed for
 ## construction, so you're in the left lane. 道路交通安全規則 99-2-2: on a one-way road with 3+
 ## lanes, a scooter in the left lane must turn RIGHT in two stages. Destination: to the right.
+## Setting: 台北重慶南路一段 in the 博愛特區 — a four-lane one-way street (維基百科), old bookshops
+## along it, bank head offices, and the 總統府 tower at the end of the street.
 
 const HALF := 7.0  # 4 lanes, all northbound
 const WALK := 4.0
@@ -72,6 +74,8 @@ func build() -> void:
 	sign_board("施工中\n外側車道封閉", Vector3(HALF + 1.2, 0, 75.0), 0.0, Color(0.9, 0.5, 0.1), 2.2)
 	sign_board("機慢車\n兩段右轉", Vector3(-HALF - 1.2, 0, 40.0), 0.0, Color(0.15, 0.35, 0.75), 2.2)
 	sign_board("銀行", Vector3(95.0, 0, EW + 1.5), PI, Color(0.1, 0.4, 0.7), 2.5)
+	sign_board("重慶南路一段", Vector3(-HALF - 1.5, 0, 60.0), 0.0, Color(0.1, 0.35, 0.7), 3.0)
+	_bookshops_and_tower()
 
 	sig = TrafficSignal.new()
 	add_child(sig)
@@ -90,6 +94,35 @@ func build() -> void:
 	box.turn_area = Rect2(Vector2(-HALF - 3.8, -EW), Vector2(2.0 * HALF + 3.8, 2.0 * EW))
 	_add_rules()
 	gps = [Vector3(-2.0, 0, 2.0), Vector3(95.0, 0, 0.0)]
+
+
+## 重慶南路 used to be 書店街: vertical bookshop signs on both sides. At the end of the street, the
+## red-brick 總統府 with its central tower. The bank on the right street gets a stone front.
+func _bookshops_and_tower() -> void:
+	var names := ["書局", "文具", "參考書", "出版社", "書局", "考試用書", "字典", "書局"]
+	var colors := [Color(0.1, 0.35, 0.6), Color(0.6, 0.12, 0.12), Color(0.15, 0.45, 0.3)]
+	var i := 0
+	for sx in [-1, 1]:
+		for z in [85.0, 72.0, 60.0, 48.0, 36.0, -20.0, -34.0, -50.0, -66.0, -82.0, -98.0]:
+			StreetDressing._shop_sign(self, Vector3(sx * (HALF + WALK + 1.2), 0, z + sx * 3.0), sx,
+				names[i % names.size()], colors[i % colors.size()], 4.5 + (i % 3) * 0.8)
+			i += 1
+	# 總統府: a long red-brick front with white bands, and the tall central tower.
+	var brick := Color(0.7, 0.32, 0.22)
+	var band := Color(0.92, 0.9, 0.85)
+	var front := Vector3(0, 0, -250.0)
+	K.box(self, Vector3(130.0, 20.0, 16.0), front + Vector3(0, 10.0, 0), brick)
+	for y in [7.0, 14.0, 20.0]:
+		K.box(self, Vector3(130.5, 0.8, 16.5), front + Vector3(0, y, 0), band)
+	K.box(self, Vector3(14.0, 60.0, 14.0), front + Vector3(0, 30.0, 0), brick)
+	for y in [22.0, 38.0, 54.0]:
+		K.box(self, Vector3(14.5, 1.0, 14.5), front + Vector3(0, y, 0), band)
+	K.box(self, Vector3(9.0, 8.0, 9.0), front + Vector3(0, 64.0, 0), band)
+	# The bank: pale stone with columns.
+	var bank := Vector3(95.0, 0, -EW - WALK - 8.0)
+	K.box(self, Vector3(28.0, 16.0, 12.0), bank + Vector3(0, 8.0, 0), Color(0.82, 0.8, 0.74))
+	for cx in [-9.0, -3.0, 3.0, 9.0]:
+		K.box(self, Vector3(1.2, 10.0, 1.2), bank + Vector3(cx, 5.0, 6.5), Color(0.9, 0.88, 0.82))
 
 
 func _add_rules() -> void:

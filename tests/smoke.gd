@@ -32,7 +32,9 @@ func _cases() -> Array:
 			await _drive(l, [Vector3(7.7, 0, -20), Vector3(7.7, 0, -270), Vector3(8.75, 0, -296)], 7.0)
 			_expect_win(l)],
 		[1, "騎進空的內側車道", func(l: LevelBase) -> void:
-			await _teleport_expect(l, Vector3(5.25, 0.1, 0), 0.0, ["lane_ban"])],
+			await _teleport_expect(l, Vector3(5.25, 0.1, -100.0), 0.0, ["lane_ban"])],
+		[1, "輕軌之前騎內側車道：還沒禁行", func(l: LevelBase) -> void:
+			await _teleport_expect(l, Vector3(5.25, 0.1, 10.0), 0.0, [])],
 		[1, "逆向", func(l: LevelBase) -> void:
 			await _teleport_expect(l, Vector3(-5.0, 0.1, 0), 0.0, ["wrong_way"])],
 		[1, "騎上人行道", func(l: LevelBase) -> void:
@@ -126,7 +128,7 @@ func _cases() -> Array:
 			await _stop_and_wait(l, PI / 2.0, func() -> bool: return l.sig.state("ew") == "green")
 			await _drive(l, [Vector3(0, 0, -135.4), Vector3(-80, 0, -133.5)], 13.0)
 			_expect_win(l)],
-		[6, "橋上超車閃進汽車道", func(l: LevelBase) -> void:
+		[6, "不想卡在腳踏車後面，走汽車道上橋", func(l: LevelBase) -> void:
 			await _teleport_expect(l, Vector3(5.25, 0.1, -80), 0.0, ["lane_ban"])],
 		[6, "撞到腳踏車只會被擋住，不會失敗", func(l: LevelBase) -> void:
 			await _drive(l, [Vector3(5.25, 0, 0), Vector3(8.3, 0, -20), Vector3(8.3, 0, -120)], 10.0, 30.0)
@@ -180,7 +182,7 @@ func _cases() -> Array:
 			_expect_tickets(["wait_outside_box"])],
 		[1, "GM 模式：吃罰單不中斷、只開一張", func(l: LevelBase) -> void:
 			Game.gm = true
-			l.scooter.global_transform = Transform3D(Basis.IDENTITY, Vector3(5.25, 0.1, 0))
+			l.scooter.global_transform = Transform3D(Basis.IDENTITY, Vector3(5.25, 0.1, -100.0))
 			l.scooter.speed = 3.0
 			await _frames(60)
 			Game.gm = false
