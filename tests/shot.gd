@@ -18,6 +18,7 @@ const SHOTS := [
 	[5, "l5_gate", Vector3(-40.0, 0.1, -133.5), PI / 2.0],
 	[6, "l6_bridge", Vector3(8.3, 0.1, -60.0), 0.0],
 	[6, "l6_end", Vector3(8.3, 0.1, -170.0), 0.0],
+	[4, "l4_fail", null, 0.0],
 	[7, "l7_bridge", null, 0.0],
 	[7, "l7_squeeze", Vector3(9.8, 0.1, 40.0), 0.0],
 	[7, "l7_narrow", Vector3(10.0, 0.1, -70.0), 0.0],
@@ -48,6 +49,8 @@ func _ready() -> void:
 				if z.law_id == s[4]:
 					level._on_violated(z.law_id, z.contrast_id, z.caption, true)
 					break
+		if str(s[1]).ends_with("_fail"):
+			level.fail("待轉區又叫「待撞區」：綠燈一亮，後面的計程車就衝過來了。")  # the longest crash line
 		if s[0] == 6 and s[1] == "l6_truck":
 			level.truck.global_position = Vector3(3.8, 0, -265.0)
 			level.truck.rotation.y = 0.0
