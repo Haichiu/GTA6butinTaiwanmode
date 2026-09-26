@@ -1,7 +1,11 @@
 extends LevelBase
-## Level 5 — 橋上分流 (after Geomeme's 橋樑車道設計: 橋下混流，橋上分流).
+## Level 6 — 橋上分流 (after Geomeme's 橋樑車道設計: 橋下混流，橋上分流).
 ## On the bridge the main lanes become 禁行機車 and scooters are squeezed into a narrow strip
-## next to the barrier — shared with slow cyclists. Overtaking means entering the main lanes.
+## next to the barrier — shared with slow cyclists.
+## Setting: 台北橋 (台1甲), 三重 → 台北. The 機慢車道 is split from the car lanes by a raised
+## island (交通局, 2025), so once you're on it there's no passing the bikes; the only way round
+## them is to go up the car lanes, which are 禁行機車. At the 台北 end it drops down the ramp that
+## the 機車瀑布 photos are taken from, over the 堤防.
 
 const HALF := 7.0  # 2 lanes each way below the bridge
 const BRIDGE_START := -30.0
@@ -51,12 +55,14 @@ func build() -> void:
 	K.line(self, Vector2(HALF - 0.3, BRIDGE_START + taper), Vector2(7.1, BRIDGE_START), K.YELLOW, 0.3)
 	K.line(self, Vector2(7.1, BRIDGE_END), Vector2(HALF - 0.3, BRIDGE_END - taper), K.YELLOW, 0.3)
 	lines_ns([-6.7, -3.5, 0.0, 3.5], ["edge", "dash", "yellow2", "dash"], BRIDGE_START, BRIDGE_END)
-	# Yellow-black hatched divider between the main lanes and the scooter strip.
-	K.line(self, Vector2(7.1, BRIDGE_START), Vector2(7.1, BRIDGE_END), K.YELLOW, 0.3)
+	# Raised concrete island between the car lanes and the 機慢車道, the whole length of the bridge.
+	K.box(self, Vector3(0.5, 0.8, BRIDGE_START - BRIDGE_END), Vector3(7.1, 0.4, (BRIDGE_START + BRIDGE_END) / 2.0),
+		Color(0.78, 0.77, 0.74), true)
 	var z := BRIDGE_START - 1.0
 	while z > BRIDGE_END:
-		K.box(self, Vector3(0.3, 0.03, 0.8), Vector3(7.1, 0.05, z), Color(0.1, 0.1, 0.1))
-		z -= 2.0
+		K.box(self, Vector3(0.52, 0.2, 0.9), Vector3(7.1, 0.7, z), K.YELLOW)
+		z -= 3.0
+	_taipei_bridge()
 	for zz in [-60.0, -120.0, -175.0]:
 		for lane_x in [1.75, 5.25]:
 			K.ground_text(self, "禁\n行\n機\n車", Vector2(lane_x, zz), K.YELLOW)
@@ -79,6 +85,33 @@ func build() -> void:
 
 	_add_rules()
 	gps = [Vector3(8.3, 0, BRIDGE_START - 5.0), Vector3(8.3, 0, BRIDGE_END + 5.0), Vector3(5.25, 0, -285.0)]
+
+
+## 淡水河 is wide here: water well beyond both sides, lamp posts along the bridge, the 堤防 wall
+## and its 水門 at the 台北 end, 三重's towers behind you and 大稻埕's low roofs ahead.
+func _taipei_bridge() -> void:
+	K.surface(self, Vector2(-500.0, BRIDGE_END + 10.0), Vector2(500.0, BRIDGE_START - 10.0), WATER, 0.009)
+	var z := BRIDGE_START - 8.0
+	while z > BRIDGE_END + 4.0:
+		for x in [-HALF - 0.3, STRIP_MAX + 0.45]:
+			K.box(self, Vector3(0.15, 7.0, 0.15), Vector3(x, 3.5, z), Color(0.55, 0.58, 0.6))
+			K.box(self, Vector3(1.4, 0.2, 0.3), Vector3(x - signf(x) * 0.6, 7.0, z), Color(0.55, 0.58, 0.6))
+		z -= 20.0
+	# 堤防: a tall grey wall across the whole view at the 台北 end; the road rides over it.
+	for side in [-1.0, 1.0]:
+		var inner := HALF + 1.0 if side < 0 else STRIP_MAX + 1.5
+		K.box(self, Vector3(400.0, 6.0, 4.0), Vector3(side * (inner + 200.0), 3.0, BRIDGE_END - 12.0), Color(0.6, 0.6, 0.58), true)
+	K.box(self, Vector3(6.0, 4.0, 4.4), Vector3(-40.0, 2.0, BRIDGE_END - 12.0), Color(0.3, 0.45, 0.6))  # 水門
+	sign_board("水門", Vector3(-40.0, 4.5, BRIDGE_END - 9.5), 0.0, Color(0.2, 0.35, 0.6), 1.5)
+	sign_board("台北橋", Vector3(STRIP_MAX + 1.4, 0, BRIDGE_START + 4.0), 0.0, Color(0.1, 0.45, 0.25), 2.8)
+	sign_board("台1甲", Vector3(-HALF - 1.5, 0, 30.0), PI, Color(0.1, 0.45, 0.25), 2.2)
+	# 三重 behind you: tall residential towers. 台北 ahead: 大稻埕's low old shophouses.
+	for i in 6:
+		K.box(self, Vector3(18.0, 60.0 + (i % 3) * 20.0, 18.0), Vector3(-80.0 + i * 32.0, 30.0 + (i % 3) * 10.0, 140.0 + (i % 2) * 30.0),
+			Color(0.75, 0.73, 0.7))
+	for i in 12:
+		var x := (-1.0 if i % 2 == 0 else 1.0) * (30.0 + (i / 2) * 18.0)
+		K.box(self, Vector3(12.0, 9.0, 14.0), Vector3(x, 4.5, BRIDGE_END - 40.0 - (i % 3) * 16.0), Color(0.72, 0.55, 0.45))
 
 
 func after_spawn() -> void:
@@ -107,8 +140,8 @@ func _cyclist(i: int) -> Node3D:
 
 
 func _add_rules() -> void:
-	ViolationZone.make(self, Vector2(0.3, BRIDGE_END), Vector2(6.9, BRIDGE_START), "lane_ban", "ped_red,ambulance_tailgate",
-		"超一台腳踏車 600，比行人闖紅燈（500）還貴；跟在救護車屁股後面狂飆也才 900。", Vector3.FORWARD)
+	ViolationZone.make(self, Vector2(0.3, BRIDGE_END), Vector2(6.8, BRIDGE_START), "lane_ban", "ped_red,ambulance_tailgate",
+		"不想卡在腳踏車後面，改走汽車道上橋：600，比行人闖紅燈（500）還貴；跟在救護車屁股後面狂飆也才 900。", Vector3.FORWARD)
 	ViolationZone.make(self, Vector2(-HALF, -300.0), Vector2(-0.3, 60.0), "wrong_way")
 	goal(Vector2(0.3, -290.0), Vector2(HALF, -280.0))
 	# Cars fly past in the lanes you're not allowed in.
@@ -117,7 +150,7 @@ func _add_rules() -> void:
 	traffic([Vector3(-5.25, 0, -300.0), Vector3(-5.25, 0, 60.0)] as Array[Vector3], 13.0, 4.0)
 	# Scooters funnel into the strip with you (and queue behind the cyclists); pedestrians on land.
 	traffic([Vector3(5.25, 0, 60.0), Vector3(5.25, 0, 10.0), Vector3(8.3, 0, BRIDGE_START - 2.0), Vector3(8.3, 0, BRIDGE_END + 2.0),
-		Vector3(5.25, 0, BRIDGE_END - 25.0), Vector3(5.25, 0, -300.0)] as Array[Vector3], 8.0, 4.0, Callable(), 3.0, Vector3.INF, Callable(), "scooter")
+		Vector3(5.25, 0, BRIDGE_END - 25.0), Vector3(5.25, 0, -300.0)] as Array[Vector3], 8.0, 1.6, Callable(), 3.0, Vector3.INF, Callable(), "scooter")
 	traffic([Vector3(-8.0, 0, -300.0), Vector3(-8.0, 0, 60.0)] as Array[Vector3], 11.0, 3.0, Callable(), 0.0, Vector3.INF, Callable(), "scooter")
 	for sx in [-1, 1]:
 		pedestrians_ns(sx * (HALF + 2.2), 60.0, 2.0, 3)

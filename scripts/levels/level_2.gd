@@ -3,6 +3,9 @@ extends LevelBase
 ## At the intersection the scooter lane turns into a right-turn-only lane, and the only
 ## straight lane is 禁行機車. Scooters simply cannot go straight here. The legal way is a
 ## right turn and a loop around the block: street A east, side street B north, back street C west.
+## Setting: 屏東市建國路 (台3線). TVBS: inner lanes 禁行機車, outer lane right-turn only; 公路局
+## says turn right and 待轉 on the next street, and points to the three notices it put up within
+## 100 m. Riders mostly never saw them.
 
 const HALF := 10.5
 const WALK := 4.0
@@ -15,14 +18,14 @@ const SMALL := 4.0  # half width of B and C
 
 func _init() -> void:
 	title = "我的車道呢？"
-	who = "歌迷・18:57"
-	objective = "搶了三個月的演唱會門票，七點開場。場館就在前面路口正對面。"
+	who = "工程師・18:57"
+	objective = "交友軟體聊了三個月，今天第一次見面。\n約在前面路口過去、萬年溪旁邊的咖啡店，七點。"
 	deadline = 50.0
-	deadline_name = "開場"
-	place = "演唱會入口"
-	waiting_person = false
-	ending = "衝進場館的瞬間，第一首歌前奏剛好下。\n全場尖叫，你也是。"
-	late_ending = "你在場館外面，隔著牆聽完了安可。"
+	deadline_name = "約定時間"
+	place = "咖啡店"
+	waiting_person = true
+	ending = "你推開咖啡店的門，她剛好抬頭。\n「你也是騎車來的吧？頭髮好亂。」"
+	late_ending = "她已經走了。\n桌上留著一杯沒動過的拿鐵。"
 
 
 func spawn_transform() -> Transform3D:
@@ -64,7 +67,11 @@ func build() -> void:
 	lines_ew([C_Z], ["yellow2"], HALF, B_X - SMALL)
 
 	sign_board("右轉專用", Vector3(HALF + 1.2, 0, 30.0), 0.0, Color(0.15, 0.35, 0.75), 2.2)
-	sign_board("巨蛋演唱會\n今晚 19:00", Vector3(HALF + 1.5, 0, -155.0), -PI / 2.0, Color(0.55, 0.15, 0.6), 2.5)
+	# The three notices within 100 m (small, white, at the roadside — easy to ride past).
+	for nz in [62.0, 48.0, 20.0]:
+		sign_board("機車直行\n請右轉\n至鄰近路口\n待轉", Vector3(HALF + 0.8, 0, nz), 0.0, Color(0.92, 0.92, 0.9), 1.3)
+	sign_board("台3　建國路", Vector3(-HALF - 1.5, 0, 60.0), PI, Color(0.1, 0.45, 0.25), 2.8)
+	_wannian_creek()
 	# The block inside the loop hides the detour from view.
 	for bx in [22.0, 38.0]:
 		for bz in [-25.0, -55.0]:
@@ -78,6 +85,33 @@ func build() -> void:
 
 	_add_rules()
 	gps = [Vector3(8.75, 0, -155.0)]
+
+
+## 萬年溪 crosses the road north of the junction: a concrete channel under a short bridge, with
+## the park's trees along it. The café is on the far bank.
+func _wannian_creek() -> void:
+	const CZ := -135.0
+	K.surface(self, Vector2(-300.0, CZ - 7.0), Vector2(300.0, CZ + 7.0), Color(0.62, 0.62, 0.6), 0.005)  # channel walls/banks
+	K.surface(self, Vector2(-300.0, CZ - 4.5), Vector2(300.0, CZ + 4.5), Color(0.25, 0.4, 0.38), 0.008)  # water
+	K.surface(self, Vector2(-HALF - WALK, CZ - 7.5), Vector2(HALF + WALK, CZ + 7.5), K.ASPHALT, 0.02)  # the bridge deck
+	lines_ns([-10.2, -7.0, -3.5, 0.0, 3.5, 7.0, 10.2], ["edge", "dash", "dash", "yellow2", "dash", "dash", "edge"], CZ + 7.5, CZ - 7.5)
+	for x in [-HALF - WALK, HALF + WALK]:
+		K.box(self, Vector3(0.3, 1.1, 15.0), Vector3(x, 0.55, CZ), Color(0.8, 0.78, 0.74), true)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 2
+	for i in 18:
+		var side := -1.0 if i % 2 == 0 else 1.0
+		StreetDressing._tree(self, Vector3(side * rng.randf_range(HALF + WALK + 20.0, 120.0), 0, CZ + side * 10.0), rng.randf_range(1.0, 1.5))
+	sign_board("萬年溪", Vector3(HALF + WALK + 0.5, 0, CZ + 8.0), 0.0, Color(0.1, 0.45, 0.25), 2.0)
+	# 屏東 roadside: betel-nut stands with their glass booths and neon.
+	for bz in [52.0, -60.0, -175.0]:
+		_betel_stand(Vector3(-HALF - WALK + 1.2, 0, bz))
+
+
+func _betel_stand(pos: Vector3) -> void:
+	K.box(self, Vector3(2.2, 2.4, 2.4), pos + Vector3(0, 1.2, 0), Color(0.75, 0.88, 0.92))
+	K.box(self, Vector3(2.4, 0.15, 2.8), pos + Vector3(0, 2.5, 0), Color(0.9, 0.2, 0.5))
+	sign_board("檳榔", pos + Vector3(0.6, 0, 1.6), PI / 2.0, Color(0.95, 0.2, 0.55), 3.2)
 
 
 func _add_rules() -> void:

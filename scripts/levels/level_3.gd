@@ -2,6 +2,9 @@ extends LevelBase
 ## Level 3 — 兩段式左轉 (with Geomeme's 機車停等區: the box is full of cars).
 ## Destination is to the left. Legal: go straight on green, stop in the 待轉區 at the far-right
 ## corner, turn to face west, wait for the cross street's green, then go.
+## Setting: 新北板橋文化路二段・182巷口 (中央社 2024-12: a left-turning car hit an oncoming taxi,
+## which swerved into the 待轉區 and hit the rider waiting there). The cross street is drawn
+## wider than the real 巷.
 
 const HALF := 10.5  # arterial 3+3
 const WALK := 4.0
@@ -73,6 +76,8 @@ func build() -> void:
 	sign_board("機慢車\n兩段左轉", Vector3(HALF + 1.2, 0, 40.0), 0.0, Color(0.15, 0.35, 0.75), 2.2)
 	sign_board("科技執法\n違規取締", Vector3(HALF + 1.2, 0, 22.0), 0.0, Color(0.9, 0.75, 0.1), 2.2)
 	sign_board("早餐", Vector3(-95.0, 0, -EW - 1.5), 0.0, Color(0.8, 0.25, 0.15), 2.5)
+	sign_board("文化路二段", Vector3(HALF + 1.5, 0, 60.0), 0.0, Color(0.1, 0.35, 0.7), 3.0)
+	sign_board("182巷", Vector3(-HALF - 1.5, 0, -EW - 1.5), 0.0, Color(0.1, 0.35, 0.7), 2.4)
 
 	sig = TrafficSignal.new()
 	add_child(sig)
@@ -128,7 +133,7 @@ func _add_rules() -> void:
 func after_spawn() -> void:
 	# Waiting at the westbound stop line right behind the 待轉區; floors it 1.2 s after green.
 	var path: Array[Vector3] = [Vector3(HALF + 10.0, 0, -5.25), Vector3(-150.0, 0, -5.25)]
-	rusher = NpcVehicle.make(self, CARS + "sedan.glb", 4.4, path, 10.0)
+	rusher = NpcVehicle.make(self, CARS + "taxi.glb", 4.4, path, 10.0)
 	rusher.hold = true
 	rusher.yields = false  # it is supposed to hit you
 	rusher.target = scooter
